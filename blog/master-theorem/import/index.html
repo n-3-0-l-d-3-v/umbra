@@ -115,7 +115,7 @@ x · y = ac · 10^(2h) + (ad + bc) · 10^h + bd
 <li><strong>Treating Θ as the whole story.</strong> Experiment 1 showed constants of 3, 1 and 2. For small inputs constants can matter more than the exponent, which is why real libraries switch from Karatsuba back to schoolbook multiplication below a certain size.</li>
 </ul>
 <h2>11. Where this shows up in Umbra</h2>
-<p>This post has no game of its own, but two of the missions in  (umbra-daa.vercel.app), the browser game I built for this course, are these recurrences in disguise.</p>
+<p>This post has no game of its own, but two of the missions in Umbra (umbra-daa.vercel.app), the browser game I built for this course, are these recurrences in disguise.</p>
 <p>In <strong>Signal Lock</strong>, par is ⌊log₂n⌋ + 1 pings. That number is the solution of T(n) = T(n/2) + 1, and you can feel it when the remaining candidates halve after every good ping. In <strong>Convoy</strong>, the recursion tree of T(n) = 2T(n/2) + n is drawn on screen as you play, with every level holding all n pods: Case 2, as a picture.</p>
 <figure><img alt="The Umbra home page" src="https://umbra-daa.vercel.app/blog/img/umbra_home.png" /><figcaption>Figure 3: Umbra, where the merge sort and binary search recurrences can be played rather than solved.</figcaption></figure>
 <h2>12. Summary</h2>
