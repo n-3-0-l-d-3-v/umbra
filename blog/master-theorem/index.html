@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reading a Recursion: The Master Theorem Without the Fear — Umbra</title>
+<meta name="description" content="Recursive algorithms are easy to write and awkward to time. A loop that runs n times is obviously Θ(n). But what about a function that calls itself three time">
+<meta name="author" content="Neil Thomas Mathew">
+<meta name="theme-color" content="#0b0b0b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../notes.css">
+</head>
+<body>
+<div id="bar"></div>
+<header class="mast"><div class="top"><a class="logo" href="/">Umbra<sup>®</sup></a><nav class="lbl"><a href="../">Notes</a><a href="/">Play ↗</a></nav></div>
+<div class="hero"><div class="kick lbl"><b>Note 04</b><span>Recurrences</span><span>Analysis</span></div>
+<h1><span class="w"><span style="--i:0">Reading</span></span> <span class="w"><span style="--i:1"><em>a</em></span></span> <span class="w"><span style="--i:2"><em>Recursion</em></span></span></h1>
+<div class="meta lbl"><span>The Master Theorem Without the Fear</span></div>
+<div class="meta lbl" style="margin-top:20px;border:0;padding:0"><span>By <b>Neil Thomas Mathew</b></span><span><b>10</b> min read</span><span>Design &amp; Analysis of Algorithms</span></div></div></header>
+<div class="wrap"><aside class="toc"><span class="lbl">Contents</span><a href="#s1">From an algorithm to a recurrence</a><a href="#s2">The recursion tree: one picture, three outcomes</a><a href="#s3">The theorem</a><a href="#s4">A procedure for using it</a><a href="#s5">Worked examples</a><a href="#s6">A real case: Karatsuba multiplication</a><a href="#s7">Checking the theorem by brute force</a><a href="#s8">Space complexity</a><a href="#s9">Where the theorem stops working</a><a href="#s10">Common mistakes worth watching for</a><a href="#s11">Where this shows up in Umbra</a><a href="#s12">Summary</a></aside>
+<article>
+<p>Recursive algorithms are easy to write and awkward to time. A loop that runs n times is obviously Θ(n). But what about a function that calls itself three times on half the input and then does a linear amount of tidying up? You cannot just count the lines.</p>
+<p>The <strong>Master Theorem</strong> is the shortcut for exactly this situation. It looks like three formulas to memorise, which is how most people meet it, and why most people dislike it. It is really one question: <strong>where does the work pile up, at the top of the recursion, at the bottom, or evenly throughout?</strong></p>
+<p>In this post I build the theorem from that question, use it on real algorithms, check its predictions by brute force, and show where it stops working.</p>
+<h2 id="s1"><span>01</span>From an algorithm to a recurrence</h2>
+<p>A divide-and-conquer algorithm does three things: it splits the problem into smaller pieces, solves each piece recursively, and combines the results. Its running time has the same shape:</p>
+<pre><code class="language-text">T(n) = a · T(n / b) + f(n)
+</code></pre>
+<ul>
+<li><strong>a</strong> is how many subproblems it creates.</li>
+<li><strong>n / b</strong> is the size of each one.</li>
+<li><strong>f(n)</strong> is the work done outside the recursive calls: splitting and combining.</li>
+</ul>
+<p>Merge sort makes 2 calls on halves and merges in linear time: T(n) = 2T(n/2) + n. Binary search makes 1 call on a half and does constant work: T(n) = T(n/2) + 1. This equation is called a <strong>recurrence</strong>, and "solving" it means finding a formula without T on the right-hand side.</p>
+<h2 id="s2"><span>02</span>The recursion tree: one picture, three outcomes</h2>
+<p>Draw the calls as a tree. The root does f(n) work. It has a children, each doing f(n/b). Each of those has a children, and so on, for log_b n levels until the pieces reach size 1.</p>
+<p>Now add up the work on each level and ask how it changes as you go down.</p>
+<figure class="chart rv"><img loading="lazy" alt="Work per level for three recurrences" src="../img/b4_fig1_three_cases.png" /><figcaption>Figure 1: Work done on each level of the recursion for n = 16. The shape tells you the answer.</figcaption></figure>
+<ul>
+<li><strong>Left: the work grows as you go down.</strong> There are so many subproblems that the bottom level outweighs everything above it. The total is decided by the <strong>leaves</strong>.</li>
+<li><strong>Middle: every level does the same work.</strong> The total is that amount multiplied by the number of levels.</li>
+<li><strong>Right: the work shrinks as you go down.</strong> The top level outweighs everything below it. The total is decided by the <strong>root</strong>.</li>
+</ul>
+<p>That is the entire Master Theorem. The three "cases" are these three shapes.</p>
+<h2 id="s3"><span>03</span>The theorem</h2>
+<p>How many leaves are there? The tree has log_b n levels and multiplies by a at each one, giving a^(log_b n) leaves, which is the same number as <strong>n^(log_b a)</strong>. Call that exponent the <strong>critical exponent</strong>, c = log_b a. The theorem compares f(n) with n^c.</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>Case</th>
+<th>Condition</th>
+<th>Shape</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>f(n) grows polynomially <strong>slower</strong> than n^c</td>
+<td>Leaves dominate</td>
+<td>T(n) = Θ(n^c)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>f(n) grows at the <strong>same</strong> rate as n^c</td>
+<td>All levels equal</td>
+<td>T(n) = Θ(n^c · log n)</td>
+</tr>
+<tr>
+<td>3</td>
+<td>f(n) grows polynomially <strong>faster</strong> than n^c</td>
+<td>Root dominates</td>
+<td>T(n) = Θ(f(n))</td>
+</tr>
+</tbody>
+</table></div>
+<p>"Polynomially" matters: the gap has to be a factor of n^ε for some ε &gt; 0, not just a logarithm. Case 3 also needs a mild regularity condition, a · f(n/b) ≤ k · f(n) for some constant k &lt; 1, which holds for every ordinary polynomial f.</p>
+<h2 id="s4"><span>04</span>A procedure for using it</h2>
+<pre><code class="language-text">SOLVE-RECURRENCE(a, b, f)                 // T(n) = a·T(n/b) + f(n)
+    c = log_b(a)                          // critical exponent
+    compare f(n) with n^c:
+        if f(n) = O(n^(c − ε)) for some ε &gt; 0:
+            return Θ(n^c)                 // Case 1: leaves win
+        if f(n) = Θ(n^c):
+            return Θ(n^c · log n)         // Case 2: tie
+        if f(n) = Ω(n^(c + ε)) for some ε &gt; 0
+           and a·f(n/b) ≤ k·f(n) for some k &lt; 1:
+            return Θ(f(n))                // Case 3: root wins
+    otherwise:
+        the theorem does not apply; draw the recursion tree
+</code></pre>
+<p>In practice it is three steps: read off a, b and f; compute c = log_b a; compare.</p>
+<h2 id="s5"><span>05</span>Worked examples</h2>
+<p><strong>Binary search: T(n) = T(n/2) + 1.</strong>
+a = 1, b = 2, so c = log₂1 = 0 and n^c = 1. f(n) = 1 matches exactly. Case 2: T(n) = Θ(n⁰ · log n) = <strong>Θ(log n)</strong>.</p>
+<p><strong>Merge sort: T(n) = 2T(n/2) + n.</strong>
+a = 2, b = 2, so c = 1 and n^c = n. f(n) = n matches. Case 2: <strong>Θ(n log n)</strong>.</p>
+<p><strong>T(n) = 3T(n/2) + n.</strong>
+a = 3, b = 2, so c = log₂3 ≈ 1.585. f(n) = n grows slower than n^1.585. Case 1: <strong>Θ(n^1.585)</strong>.</p>
+<p>It is worth doing this one by hand with the tree, to see the theorem is not magic. Level i has 3^i subproblems, each of size n/2^i, so the level does n · (3/2)^i work. That is a geometric series growing by a factor of 1.5, so its sum is dominated by its last term. The last level is i = log₂n, where the work is n · (3/2)^(log₂n) = 3^(log₂n) = n^(log₂3). Same answer.</p>
+<p><strong>T(n) = T(n/2) + n.</strong>
+a = 1, b = 2, so c = 0 and n^c = 1. f(n) = n grows much faster. Regularity: f(n/2) = n/2 ≤ ½ · n. Case 3: <strong>Θ(n)</strong>. By hand: n + n/2 + n/4 + … is less than 2n.</p>
+<p>More results from the same three steps:</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>Recurrence</th>
+<th>Where it comes from</th>
+<th>a, b</th>
+<th>n^c</th>
+<th>Case</th>
+<th>T(n)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T(n/2) + 1</td>
+<td>Binary search</td>
+<td>1, 2</td>
+<td>1</td>
+<td>2</td>
+<td>Θ(log n)</td>
+</tr>
+<tr>
+<td>2T(n/2) + n</td>
+<td>Merge sort</td>
+<td>2, 2</td>
+<td>n</td>
+<td>2</td>
+<td>Θ(n log n)</td>
+</tr>
+<tr>
+<td>3T(n/2) + n</td>
+<td>Karatsuba multiplication</td>
+<td>3, 2</td>
+<td>n^1.585</td>
+<td>1</td>
+<td>Θ(n^1.585)</td>
+</tr>
+<tr>
+<td>8T(n/2) + n²</td>
+<td>Simple divide-and-conquer matrix multiplication</td>
+<td>8, 2</td>
+<td>n³</td>
+<td>1</td>
+<td>Θ(n³)</td>
+</tr>
+<tr>
+<td>7T(n/2) + n²</td>
+<td>Strassen's matrix multiplication</td>
+<td>7, 2</td>
+<td>n^2.807</td>
+<td>1</td>
+<td>Θ(n^2.807)</td>
+</tr>
+<tr>
+<td>4T(n/2) + n²</td>
+<td>–</td>
+<td>4, 2</td>
+<td>n²</td>
+<td>2</td>
+<td>Θ(n² log n)</td>
+</tr>
+<tr>
+<td>2T(n/2) + n²</td>
+<td>–</td>
+<td>2, 2</td>
+<td>n</td>
+<td>3</td>
+<td>Θ(n²)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Look at the two matrix rows. Strassen's whole contribution was finding a way to use 7 recursive multiplications instead of 8. That one change moves the critical exponent from 3 to 2.807. When the leaves dominate, <strong>reducing the number of subproblems is the only thing that helps</strong>; making the combine step faster would change nothing.</p>
+<h2 id="s6"><span>06</span>A real case: Karatsuba multiplication</h2>
+<p>Multiplying two n-digit numbers the school way takes n² single-digit multiplications. Split each number in half instead:</p>
+<pre><code class="language-text">x = a · 10^h + b          y = c · 10^h + d          (h = n/2)
+
+x · y = ac · 10^(2h) + (ad + bc) · 10^h + bd
+</code></pre>
+<p>That needs four half-size products: ac, ad, bc and bd. The recurrence is T(n) = 4T(n/2) + n, and the Master Theorem gives Θ(n²). No improvement.</p>
+<p>In 1960 Anatoly Karatsuba, then a 23-year-old student, noticed that the middle term can be had from one product instead of two:</p>
+<pre><code class="language-text">ad + bc = (a + b)(c + d) − ac − bd
+</code></pre>
+<p>Since ac and bd are needed anyway, the whole thing takes <strong>three</strong> half-size multiplications:</p>
+<pre><code class="language-text">KARATSUBA(x, y, n)
+    if n == 1: return x · y
+    h = n / 2
+    split x into a, b and y into c, d
+    P1 = KARATSUBA(a, c, h)
+    P2 = KARATSUBA(b, d, h)
+    P3 = KARATSUBA(a + b, c + d, h)
+    return P1 · 10^(2h) + (P3 − P1 − P2) · 10^h + P2
+</code></pre>
+<p>T(n) = 3T(n/2) + n, which is Case 1: Θ(n^1.585). Shortly before, Kolmogorov had conjectured that n² was the best possible. This algorithm disproved it.</p>
+<h2 id="s7"><span>07</span>Checking the theorem by brute force</h2>
+<p>The Master Theorem makes predictions, so they can be tested. I did two experiments.</p>
+<p><strong>Experiment 1: evaluate the recurrences exactly.</strong> I computed T(n) for the three recurrences in Figure 1, with T(1) = 1, up to n = 1,048,576, and divided by the predicted growth. If the theorem is right, each ratio should level off at a constant.</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>n</th>
+<th>3T(n/2) + n ÷ n^1.585</th>
+<th>2T(n/2) + n ÷ n·log₂n</th>
+<th>T(n/2) + n ÷ n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>16</td>
+<td>2.605</td>
+<td>1.250</td>
+<td>1.938</td>
+</tr>
+<tr>
+<td>256</td>
+<td>2.922</td>
+<td>1.125</td>
+<td>1.996</td>
+</tr>
+<tr>
+<td>4,096</td>
+<td>2.985</td>
+<td>1.083</td>
+<td>2.000</td>
+</tr>
+<tr>
+<td>65,536</td>
+<td>2.997</td>
+<td>1.062</td>
+<td>2.000</td>
+</tr>
+<tr>
+<td>1,048,576</td>
+<td>2.999</td>
+<td>1.050</td>
+<td>2.000</td>
+</tr>
+</tbody>
+</table></div>
+<p>All three flatten out, at 3, 1 and 2. Those constants are exactly what Θ hides: the theorem tells you the <em>shape</em> of the growth, not the multiplier.</p>
+<p><strong>Experiment 2: count Karatsuba's multiplications.</strong> I implemented Karatsuba, checked every product against Python's built-in multiplication, and counted the single-digit multiplications it performs.</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>Digits</th>
+<th>Schoolbook (n²)</th>
+<th>Karatsuba (counted)</th>
+<th>Saving</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>16</td>
+<td>9</td>
+<td>1.8×</td>
+</tr>
+<tr>
+<td>16</td>
+<td>256</td>
+<td>81</td>
+<td>3.2×</td>
+</tr>
+<tr>
+<td>64</td>
+<td>4,096</td>
+<td>729</td>
+<td>5.6×</td>
+</tr>
+<tr>
+<td>256</td>
+<td>65,536</td>
+<td>6,561</td>
+<td>10.0×</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="chart rv"><img loading="lazy" alt="Ratios converging and Karatsuba compared with schoolbook multiplication" src="../img/b4_fig2_ratios.png" /><figcaption>Figure 2: Left: each exact T(n), divided by the Master Theorem's prediction, settles to a constant. Right: Karatsuba's counted multiplications against the schoolbook n², on log–log axes.</figcaption></figure>
+<p>The Karatsuba counts are exact powers of 3: 9, 81, 729, 6,561. That is 3^(log₂n), which is n^(log₂3), the number of leaves in the recursion tree. Every leaf is one single-digit multiplication, and the leaves dominate. Case 1, made visible.</p>
+<h2 id="s8"><span>08</span>Space complexity</h2>
+<p>The Master Theorem is about time, but the same tree gives the space used by the call stack. Only one root-to-leaf path is active at any moment, so the stack depth is the height of the tree:</p>
+<ul>
+<li><strong>Depth:</strong> log_b n frames, so Θ(log n) stack space for all the algorithms above.</li>
+<li><strong>Plus working memory:</strong> merge sort also needs its Θ(n) buffer; binary search needs nothing extra. Written as a loop, binary search needs no stack at all.</li>
+</ul>
+<p>A useful habit: time is the <em>sum over the whole tree</em>, stack space is the <em>longest path through it</em>.</p>
+<h2 id="s9"><span>09</span>Where the theorem stops working</h2>
+<p>The Master Theorem only covers recurrences of one specific form. It says nothing when:</p>
+<ul>
+<li><strong>The gap is only a logarithm.</strong> For T(n) = 2T(n/2) + n log n, f(n) is bigger than n but not polynomially bigger, so it falls between Case 2 and Case 3. Working the tree by hand gives Θ(n log² n).</li>
+<li><strong>The subproblems are different sizes.</strong> T(n) = T(n/3) + T(2n/3) + n does not fit the form. A recursion tree shows each level costs at most n and there are Θ(log n) levels: Θ(n log n).</li>
+<li><strong>The problem shrinks by subtraction, not division.</strong> T(n) = T(n − 1) + n is what insertion sort or a worst-case quicksort gives. It unrolls to n + (n − 1) + … + 1 = Θ(n²).</li>
+<li><strong>a or b is not a constant</strong>, for example T(n) = n · T(n/2) + 1.</li>
+</ul>
+<p>In every one of these cases the recursion tree still works. The theorem is a shortcut for the tree, not a replacement for it.</p>
+<h2 id="s10"><span>10</span>Common mistakes worth watching for</h2>
+<ul>
+<li><strong>Comparing f(n) with n instead of with n^(log_b a).</strong> For T(n) = 4T(n/2) + n the comparison is n against n², not n against n.</li>
+<li><strong>Forgetting the log in Case 2.</strong> A tie does not give Θ(n^c). It gives Θ(n^c log n).</li>
+<li><strong>Applying it when the gap is not polynomial.</strong> n log n against n is not Case 3.</li>
+<li><strong>Mixing up a and b.</strong> a counts the calls; b is how much smaller each one is. 2T(n/3) and 3T(n/2) are very different.</li>
+<li><strong>Treating Θ as the whole story.</strong> Experiment 1 showed constants of 3, 1 and 2. For small inputs constants can matter more than the exponent, which is why real libraries switch from Karatsuba back to schoolbook multiplication below a certain size.</li>
+</ul>
+<h2 id="s11"><span>11</span>Where this shows up in Umbra</h2>
+<p>This post has no game of its own, but two of the missions in <a href="https://umbra-daa.vercel.app">Umbra</a>, the browser game I built for this course, are these recurrences in disguise.</p>
+<p>In <strong>Signal Lock</strong>, par is ⌊log₂n⌋ + 1 pings. That number is the solution of T(n) = T(n/2) + 1, and you can feel it when the remaining candidates halve after every good ping. In <strong>Convoy</strong>, the recursion tree of T(n) = 2T(n/2) + n is drawn on screen as you play, with every level holding all n pods: Case 2, as a picture.</p>
+<figure class="shot rv"><img loading="lazy" alt="The Umbra home page" src="../img/umbra_home.png" /><figcaption>Figure 3: Umbra, where the merge sort and binary search recurrences can be played rather than solved.</figcaption></figure>
+<h2 id="s12"><span>12</span>Summary</h2>
+<ul>
+<li>A divide-and-conquer algorithm gives a recurrence T(n) = a·T(n/b) + f(n).</li>
+<li>The <strong>critical exponent</strong> c = log_b a counts the leaves: there are n^c of them.</li>
+<li>Compare f(n) with n^c. Slower: <strong>leaves win</strong>, Θ(n^c). Same: <strong>tie</strong>, Θ(n^c log n). Faster: <strong>root wins</strong>, Θ(f(n)).</li>
+<li>The theorem gives the shape of the growth and hides the constant.</li>
+<li>When it does not apply, draw the recursion tree. That always works.</li>
+</ul>
+<p>Once the three cases are three shapes instead of three formulas, there is very little left to memorise.</p>
+<h2 id="refs"><span>REF</span>References</h2>
+<ol class="refs">
+<li>T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, <em>Introduction to Algorithms</em>, 3rd ed., MIT Press, 2009. Chapter 4, "Divide-and-Conquer".</li>
+<li>J. L. Bentley, D. Haken and J. B. Saxe, "A general method for solving divide-and-conquer recurrences," <em>ACM SIGACT News</em>, vol. 12, no. 3, pp. 36–44, 1980.</li>
+<li>A. Karatsuba and Yu. Ofman, "Multiplication of many-digital numbers by automatic computers," <em>Doklady Akademii Nauk SSSR</em>, vol. 145, pp. 293–294, 1962.</li>
+<li>V. Strassen, "Gaussian elimination is not optimal," <em>Numerische Mathematik</em>, vol. 13, pp. 354–356, 1969.</li>
+<li>M. Akra and L. Bazzi, "On the solution of linear recurrence equations," <em>Computational Optimization and Applications</em>, vol. 10, pp. 195–210, 1998.</li>
+<li>Source code and measurement scripts: <a href="https://github.com/n-3-0-l-d-3-v/umbra">github.com/n-3-0-l-d-3-v/umbra</a></li>
+</ol>
+</article></div>
+<a class="cta" href="/"><div><span class="lbl">The game behind these notes</span><div class="big">Fly the <em>algorithm</em></div></div><span class="lbl">Open Umbra ↗</span></a>
+<nav class="pn"><a href="../dijkstra/"><span class="lbl">← Previous note</span><b>Closest First</b></a><a href="../knapsack/"><span class="lbl">Next note →</span><b>When Greedy Fails</b></a></nav>
+<footer class="lbl"><a href="../">All notes</a><a href="https://github.com/n-3-0-l-d-3-v/umbra">Source on GitHub</a><span>Umbra® · DAA</span></footer>
+<script src="../notes.js"></script>
+</body>
+</html>

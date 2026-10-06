@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>When Greedy Fails: The 0/1 Knapsack Problem and Dynamic Programming — Umbra</title>
+<meta name="description" content="You have a bag that can carry 7 kg and four things you would like to take, each with a weight and a value. You cannot take everything. Which ones go in?">
+<meta name="author" content="Neil Thomas Mathew">
+<meta name="theme-color" content="#0b0b0b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../notes.css">
+</head>
+<body>
+<div id="bar"></div>
+<header class="mast"><div class="top"><a class="logo" href="/">Umbra<sup>®</sup></a><nav class="lbl"><a href="../">Notes</a><a href="/">Play ↗</a></nav></div>
+<div class="hero"><div class="kick lbl"><b>Note 05</b><span>0/1 Knapsack</span><span>Dynamic programming</span></div>
+<h1><span class="w"><span style="--i:0">When</span></span> <span class="w"><span style="--i:1"><em>Greedy</em></span></span> <span class="w"><span style="--i:2"><em>Fails</em></span></span></h1>
+<div class="meta lbl"><span>The 0/1 Knapsack Problem and Dynamic Programming</span></div>
+<div class="meta lbl" style="margin-top:20px;border:0;padding:0"><span>By <b>Neil Thomas Mathew</b></span><span><b>11</b> min read</span><span>Design &amp; Analysis of Algorithms</span></div></div></header>
+<div class="wrap"><aside class="toc"><span class="lbl">Contents</span><a href="#s1">The problem</a><a href="#s2">Why greedy fails</a><a href="#s3">The other obvious approach: try everything</a><a href="#s4">The dynamic programming idea</a><a href="#s5">Pseudocode</a><a href="#s6">Filling in the table</a><a href="#s7">Time complexity</a><a href="#s8">Space complexity</a><a href="#s9">Checking it against real measurements</a><a href="#s10">Three design strategies, side by side</a><a href="#s11">Where it is used</a><a href="#s12">Common mistakes worth watching for</a><a href="#s13">Summary</a></aside>
+<article>
+<p>You have a bag that can carry 7 kg and four things you would like to take, each with a weight and a value. You cannot take everything. Which ones go in?</p>
+<p>The instinct is obvious: take whatever gives the most value per kilogram, and keep going until the bag is full. It feels right, it is fast, and for this problem it is <strong>wrong</strong>. Not always, but often enough that you cannot trust it.</p>
+<p>This is the <strong>0/1 knapsack problem</strong>, and it is the standard example of a problem where the greedy approach fails and <strong>dynamic programming</strong> succeeds. In this post I show the failure on a small example, build the dynamic programming solution step by step, fill in the table by hand, analyse the time and space, and measure it against brute force.</p>
+<h2 id="s1"><span>01</span>The problem</h2>
+<p>We are given n items. Item i has a weight wᵢ and a value vᵢ. The knapsack has a capacity W. Choose a subset of the items so that the total weight is at most W and the total value is as large as possible.</p>
+<p>The "0/1" means each item is either left behind (0) or taken whole (1). No fractions, and no taking the same item twice.</p>
+<p>The example used throughout this post:</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Weight</th>
+<th>Value</th>
+<th>Value per kg</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1</td>
+<td>1</td>
+<td>1.00</td>
+</tr>
+<tr>
+<td>B</td>
+<td>3</td>
+<td>4</td>
+<td>1.33</td>
+</tr>
+<tr>
+<td>C</td>
+<td>4</td>
+<td>5</td>
+<td>1.25</td>
+</tr>
+<tr>
+<td>D</td>
+<td>5</td>
+<td>7</td>
+<td>1.40</td>
+</tr>
+</tbody>
+</table></div>
+<p>Capacity <strong>W = 7</strong>.</p>
+<h2 id="s2"><span>02</span>Why greedy fails</h2>
+<p>The greedy rule sorts by value per kilogram and takes whatever still fits:</p>
+<ol>
+<li><strong>D</strong> has the best ratio (1.40). Take it. Room left: 2.</li>
+<li><strong>B</strong> is next (1.33), but weighs 3. Does not fit.</li>
+<li><strong>C</strong> (1.25) weighs 4. Does not fit.</li>
+<li><strong>A</strong> (1.00) weighs 1. Take it. Room left: 1.</li>
+</ol>
+<p>Greedy ends with <strong>D + A: weight 6, value 8.</strong></p>
+<p>But <strong>B + C weighs exactly 7 and is worth 9.</strong> Greedy committed to D because it looked best in isolation, and that choice blocked a better combination that fills the bag completely.</p>
+<p>That is the heart of it. A greedy algorithm makes one locally best choice and never revisits it. That works for some problems; in my <a href="https://umbra-daa.vercel.app/blog/dijkstra/">post on Dijkstra's algorithm</a> there is a proof that the greedy choice there can never be undercut later. Here there is no such guarantee, because <strong>what the best first item is depends on what else you can fit alongside it.</strong></p>
+<p>One variation is worth knowing: if you are allowed to take <em>fractions</em> of items (the <strong>fractional knapsack</strong>), greedy by ratio is provably optimal. You would take all of D and two-thirds of B. It is the all-or-nothing rule that breaks it.</p>
+<h2 id="s3"><span>03</span>The other obvious approach: try everything</h2>
+<p>Each item is either in or out, so there are 2ⁿ possible subsets. Checking all of them is guaranteed correct:</p>
+<pre><code class="language-text">BRUTE(i, room)                        // best value using items i..n with `room` capacity left
+    if i &gt; n: return 0
+    skip = BRUTE(i + 1, room)
+    if w[i] &gt; room: return skip
+    take = v[i] + BRUTE(i + 1, room − w[i])
+    return max(skip, take)
+</code></pre>
+<p>This is Θ(2ⁿ). For 4 items that is 16 subsets. For 40 items it is over a trillion.</p>
+<p>But look at what the function depends on: only <strong>i</strong> (which item we are up to) and <strong>room</strong> (how much capacity is left). There are at most n values of i and W + 1 values of room. So there are only about <strong>n × W different questions</strong> this function can ever be asked, even though it is called up to 2ⁿ times. Most of those calls are repeats.</p>
+<h2 id="s4"><span>04</span>The dynamic programming idea</h2>
+<p>Dynamic programming applies when a problem has two properties, and knapsack has both.</p>
+<ul>
+<li><strong>Optimal substructure.</strong> The best answer is built from best answers to smaller problems. If the best packing of a 7 kg bag includes item C, then whatever else is in the bag must be the best packing of the remaining 3 kg using the other items. If it were not, you could swap in a better one and improve the whole thing.</li>
+<li><strong>Overlapping subproblems.</strong> The same smaller problems come up again and again, as we just saw.</li>
+</ul>
+<p>So instead of recomputing, <strong>solve each subproblem once and write the answer in a table.</strong></p>
+<p>Define <strong>K[i][c]</strong> as the best value achievable using only the first i items with capacity c. For each item there are exactly two options, skip it or take it:</p>
+<pre><code class="language-text">K[i][c] = K[i−1][c]                                     if wᵢ &gt; c      (it does not fit)
+K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
+               └ skip it ┘  └──── take it ────┘
+</code></pre>
+<p>with K[0][c] = 0, because no items means no value. The answer to the whole problem is <strong>K[n][W]</strong>.</p>
+<h2 id="s5"><span>05</span>Pseudocode</h2>
+<pre><code class="language-text">KNAPSACK(w, v, n, W)
+    for c = 0 to W:
+        K[0][c] = 0
+
+    for i = 1 to n:
+        for c = 0 to W:
+            K[i][c] = K[i−1][c]                          // skip item i
+            if w[i] &lt;= c:
+                K[i][c] = max(K[i][c], v[i] + K[i−1][c − w[i]])    // or take it
+
+    // walk back through the table to find which items were taken
+    c = W
+    for i = n down to 1:
+        if K[i][c] != K[i−1][c]:
+            output item i
+            c = c − w[i]
+
+    return K[n][W]
+</code></pre>
+<h2 id="s6"><span>06</span>Filling in the table</h2>
+<p>Here is the full table for the example. Each row adds one more item to the set we are allowed to use.</p>
+<figure class="chart rv"><img loading="lazy" alt="The dynamic programming table for the example, with the traceback path highlighted" src="../img/b5_fig1_table.png" /><figcaption>Figure 1: The completed table. Darker cells hold larger values. The outlined cells show the walk back from the answer to find which items were chosen.</figcaption></figure>
+<p><strong>Row A (weight 1, value 1).</strong> From capacity 1 upwards, A fits, so every cell is 1.</p>
+<p><strong>Row B (weight 3, value 4).</strong> Below capacity 3, B does not fit, so the values are copied from the row above. At capacity 3: skip gives 1, take gives 4 + K[A][0] = 4. Take. At capacity 4: take gives 4 + K[A][1] = 5, which is B and A together.</p>
+<p><strong>Row C (weight 4, value 5).</strong> The interesting cell is capacity 7: skip gives 5, take gives 5 + K[B][3] = 5 + 4 = <strong>9</strong>. That is C plus the best use of the remaining 3 kg, which the previous row already worked out was B.</p>
+<p><strong>Row D (weight 5, value 7).</strong> At capacity 7: skip gives 9, take gives 7 + K[C][2] = 7 + 1 = 8. Skip wins, so the cell stays at 9. This is the exact moment the table <em>rejects</em> the item greedy grabbed first.</p>
+<p>The answer is <strong>K[4][7] = 9</strong>.</p>
+<h3>Recovering the items</h3>
+<p>The table gives the value. To find the items, walk back from the bottom-right corner:</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>Row</th>
+<th>Capacity</th>
+<th>Compare with the row above</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D</td>
+<td>7</td>
+<td>9 = 9, unchanged</td>
+<td>D was not taken</td>
+</tr>
+<tr>
+<td>C</td>
+<td>7</td>
+<td>9 ≠ 5, changed</td>
+<td><strong>C was taken</strong>, capacity becomes 7 − 4 = 3</td>
+</tr>
+<tr>
+<td>B</td>
+<td>3</td>
+<td>4 ≠ 1, changed</td>
+<td><strong>B was taken</strong>, capacity becomes 3 − 3 = 0</td>
+</tr>
+<tr>
+<td>A</td>
+<td>0</td>
+<td>0 = 0, unchanged</td>
+<td>A was not taken</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Take B and C: weight 7, value 9.</strong> That beats greedy's 8.</p>
+<h2 id="s7"><span>07</span>Time complexity</h2>
+<p>The table has (n + 1) rows and (W + 1) columns, and each cell takes constant time: one comparison and one addition.</p>
+<pre><code class="language-text">Time = Θ(n · W)
+</code></pre>
+<p>The traceback adds Θ(n). There is no best or worst case; the table is always filled completely.</p>
+<h3>The catch: "pseudo-polynomial"</h3>
+<p>Θ(nW) looks polynomial, but there is a subtlety. Running time is supposed to be measured against the <em>size of the input</em>, and the number W takes only about log₂W bits to write down. In terms of that size, W itself is exponential. Add one digit to W and the table gets ten times wider.</p>
+<p>So this is called a <strong>pseudo-polynomial</strong> algorithm: fast when W is a reasonable number, hopeless when W is astronomically large. That is consistent with the fact that 0/1 knapsack is <strong>NP-hard</strong>. No algorithm is known that is polynomial in the true input size, and most computer scientists believe none exists.</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Time</th>
+<th>Always correct?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Greedy by value per kg</td>
+<td>Θ(n log n)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Brute force</td>
+<td>Θ(2ⁿ)</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Dynamic programming</td>
+<td>Θ(nW)</td>
+<td>Yes</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s8"><span>08</span>Space complexity</h2>
+<ul>
+<li><strong>Full table: Θ(nW).</strong> Needed if you want to recover which items were chosen.</li>
+<li><strong>One row: Θ(W).</strong> Each row only ever reads the row directly above it, so if you only need the best <em>value</em>, a single array is enough:</li>
+</ul>
+<pre><code class="language-text">for each item i:
+    for c = W down to w[i]:
+        K[c] = max(K[c], v[i] + K[c − w[i]])
+</code></pre>
+<p>The inner loop <strong>must run from right to left</strong>. Going right to left, K[c − w[i]] still holds the value from the previous item's row. Going left to right, it would already have been updated for the current item, which lets the item be taken twice. That is a different problem (the unbounded knapsack), and a very easy bug to introduce.</p>
+<h2 id="s9"><span>09</span>Checking it against real measurements</h2>
+<p>I implemented all four approaches in Python: brute force, the full table, the one-row version, and greedy.</p>
+<p><strong>Correctness.</strong> On 2,000 random instances with up to 12 items, both dynamic programming versions matched brute force every time, and the items recovered by the traceback always fitted and added up to the reported value.</p>
+<p><strong>How often is greedy wrong?</strong> On those same 2,000 instances, greedy gave a worse answer than the optimum on <strong>330 of them, about 16%.</strong> One time in six is far too often to rely on.</p>
+<p><strong>Speed.</strong> Then I timed brute force against the one-row DP as the number of items grew, with capacity fixed at 60 and light items so that brute force could not get lucky by pruning.</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>n</th>
+<th>Subsets (2ⁿ)</th>
+<th>Table cells (n·W)</th>
+<th>Brute force</th>
+<th>DP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10</td>
+<td>1,024</td>
+<td>600</td>
+<td>0.3 ms</td>
+<td>0.06 ms</td>
+</tr>
+<tr>
+<td>14</td>
+<td>16,384</td>
+<td>840</td>
+<td>4.2 ms</td>
+<td>0.09 ms</td>
+</tr>
+<tr>
+<td>18</td>
+<td>262,144</td>
+<td>1,080</td>
+<td>64.7 ms</td>
+<td>0.12 ms</td>
+</tr>
+<tr>
+<td>20</td>
+<td>1,048,576</td>
+<td>1,200</td>
+<td>263.5 ms</td>
+<td>0.13 ms</td>
+</tr>
+<tr>
+<td>22</td>
+<td>4,194,304</td>
+<td>1,320</td>
+<td>1,040.6 ms</td>
+<td>0.15 ms</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="chart rv"><img loading="lazy" alt="Measured running time of brute force and dynamic programming" src="../img/b5_fig2_timing.png" /><figcaption>Figure 2: With a logarithmic time axis, brute force is a straight line upward, which is what exponential growth looks like. The DP line is almost flat.</figcaption></figure>
+<p>The exact times depend on my laptop, but the pattern does not:</p>
+<ol>
+<li><strong>Every two extra items multiply brute force by about four</strong> (64.7 → 263.5 → 1,040.6). That is 2ⁿ. At this rate 40 items would take roughly three days, and 60 items thousands of years.</li>
+<li><strong>The DP barely moves</strong>, from 0.06 ms to 0.15 ms, because the table only grew from 600 to 1,320 cells.</li>
+<li>At n = 22, dynamic programming is about <strong>7,000 times faster</strong>, and the gap doubles with every item added.</li>
+</ol>
+<h2 id="s10"><span>10</span>Three design strategies, side by side</h2>
+<p>This is the fourth design strategy to come up in this series, and it helps to see them together.</p>
+<div class="tw rv"><table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>How it works</th>
+<th>Example</th>
+<th>When it is safe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Divide and conquer</td>
+<td>Split into independent parts, solve each, combine</td>
+<td>Merge sort</td>
+<td>The parts do not overlap</td>
+</tr>
+<tr>
+<td>Decrease and conquer</td>
+<td>Reduce to one smaller problem</td>
+<td>Binary search</td>
+<td>One part can be discarded</td>
+</tr>
+<tr>
+<td>Greedy</td>
+<td>Make the best-looking choice and never go back</td>
+<td>Dijkstra</td>
+<td>You can prove the choice is never regretted</td>
+</tr>
+<tr>
+<td>Dynamic programming</td>
+<td>Solve every subproblem once and reuse the answers</td>
+<td>0/1 knapsack</td>
+<td>Subproblems overlap and the best answer is built from best sub-answers</td>
+</tr>
+</tbody>
+</table></div>
+<p>A reasonable rule of thumb: if a greedy idea comes to mind, try to find a small counterexample like the one in Section 2. If you find one, and the brute-force recursion keeps asking the same questions, it is a dynamic programming problem.</p>
+<h2 id="s11"><span>11</span>Where it is used</h2>
+<ul>
+<li><strong>Budgeting and investment selection.</strong> Choose projects with the highest total return without exceeding a fixed budget.</li>
+<li><strong>Cargo and container loading</strong>, where the limit is weight or volume.</li>
+<li><strong>Cutting stock.</strong> Cutting rolls of paper, steel or fabric into ordered sizes with the least waste is built on knapsack subproblems.</li>
+<li><strong>Resource allocation in computing</strong>, such as choosing which jobs to run in a fixed time or memory budget.</li>
+<li><strong>Subset sum</strong>, the special case where value equals weight, underlies several questions in cryptography and complexity theory.</li>
+</ul>
+<h2 id="s12"><span>12</span>Common mistakes worth watching for</h2>
+<ul>
+<li><strong>Trusting greedy.</strong> It is right often enough to pass a few test cases and wrong often enough to matter.</li>
+<li><strong>Running the one-row loop left to right.</strong> This silently solves the unbounded knapsack instead.</li>
+<li><strong>Off-by-one errors between rows and items.</strong> Row i of the table refers to item i, but arrays usually start at 0. Row 0 means "no items".</li>
+<li><strong>Forgetting the capacity-0 column.</strong> It is needed when an item fills the remaining space exactly.</li>
+<li><strong>Using it when W is enormous.</strong> With a capacity in the billions the table does not fit in memory. Other techniques, such as branch and bound or approximation schemes, are used instead.</li>
+<li><strong>Returning only the value</strong> when the question asked which items to take. That needs the full table, or extra bookkeeping.</li>
+</ul>
+<h2 id="s13"><span>13</span>Summary</h2>
+<ul>
+<li>In the 0/1 knapsack problem each item is taken whole or not at all, and the goal is the highest total value within a weight limit.</li>
+<li><strong>Greedy by value per weight is not reliable</strong>: it was wrong on about 16% of random instances.</li>
+<li>Brute force is correct but takes <strong>Θ(2ⁿ)</strong>.</li>
+<li>Dynamic programming fills a table using K[i][c] = max(skip, take), in <strong>Θ(nW)</strong> time and <strong>Θ(nW)</strong> space, or <strong>Θ(W)</strong> space if only the value is needed.</li>
+<li>Θ(nW) is <strong>pseudo-polynomial</strong>: the problem is NP-hard, and the algorithm is only fast when W is modest.</li>
+</ul>
+<p>Greedy asks "what looks best right now?". Dynamic programming asks "what is best for every smaller version of this problem?" and then simply looks the answer up. It takes more memory, and in exchange it never has to guess.</p>
+<h2 id="refs"><span>REF</span>References</h2>
+<ol class="refs">
+<li>T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, <em>Introduction to Algorithms</em>, 3rd ed., MIT Press, 2009. Chapter 15 (dynamic programming) and Chapter 16.2 (greedy and the knapsack problems).</li>
+<li>J. Kleinberg and É. Tardos, <em>Algorithm Design</em>, Pearson, 2006. Chapter 6.4.</li>
+<li>R. Bellman, <em>Dynamic Programming</em>, Princeton University Press, 1957.</li>
+<li>H. Kellerer, U. Pferschy and D. Pisinger, <em>Knapsack Problems</em>, Springer, 2004.</li>
+<li>R. M. Karp, "Reducibility among combinatorial problems," in <em>Complexity of Computer Computations</em>, Plenum Press, 1972, pp. 85–103.</li>
+<li>Source code and measurement scripts: <a href="https://github.com/n-3-0-l-d-3-v/umbra">github.com/n-3-0-l-d-3-v/umbra</a></li>
+</ol>
+</article></div>
+<a class="cta" href="/"><div><span class="lbl">The game behind these notes</span><div class="big">Fly the <em>algorithm</em></div></div><span class="lbl">Open Umbra ↗</span></a>
+<nav class="pn"><a href="../master-theorem/"><span class="lbl">← Previous note</span><b>Reading a Recursion</b></a><a href="../merge-sort/"><span class="lbl">Next note →</span><b>Merge Sort, Taken Apart</b></a></nav>
+<footer class="lbl"><a href="../">All notes</a><a href="https://github.com/n-3-0-l-d-3-v/umbra">Source on GitHub</a><span>Umbra® · DAA</span></footer>
+<script src="../notes.js"></script>
+</body>
+</html>
