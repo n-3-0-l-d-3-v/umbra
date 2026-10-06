@@ -160,3 +160,46 @@ function finish() {
   const r = $("stagewrap").getBoundingClientRect(), n = g === "S" ? 5 : g === "A" ? 3 : 1;
   for (let k = 0; k < n; k++) setTimeout(() => burst(r.left + r.width * (.25 + Math.random() * .5), r.top + r.height * (.25 + Math.random() * .4), pickOne(["#ecebe6", "#ecebe6", "#ecebe6", "#ecebe6"]), 40, 6), k * 220);
 }
+
+/* ---- wiring ---- */
+$("cards").onclick = e => { const b = e.target.closest("[data-open]"); if (b) wipe(() => openGame(b.dataset.open, b.dataset.m)); };
+$("cards").onmousemove = e => { const c = e.target.closest(".mc"); if (!c) return; const r = c.getBoundingClientRect(); c.style.setProperty("--mx", (e.clientX - r.left) + "px"); c.style.setProperty("--my", (e.clientY - r.top) + "px"); };
+$("stage").onclick = e => { const t = e.target.closest("[data-pick]"); if (t) { at = [e.clientX, e.clientY]; pick(t.dataset.pick); } };
+$("end").onclick = e => {
+  const a = e.target.dataset.end;
+  if (a === "new") begin();
+  if (a === "retry") begin(round);
+  if (a === "watch") { mode = "watch"; begin(round); }
+  if (a === "link") {
+    const ok = () => e.target.textContent = "Link copied";
+    try { navigator.clipboard.writeText(location.href).then(ok, () => prompt("Copy this link:", location.href)); }
+    catch (err) { prompt("Copy this link:", location.href); }
+  }
+};
+$("homeBtn").onclick = () => wipe(showHome);
+$("newBtn").onclick = () => begin();
+$("size").onchange = () => begin();
+$("focusBtn").onclick = () => $("layout").classList.toggle("focus");
+$("modeSeg").onclick = e => { const m = e.target.dataset.mode; if (m && m !== mode) { mode = m; begin(round); } };
+$("custom").onkeydown = e => {
+  if (e.key !== "Enter") return;
+  try { begin(G.parse($("custom").value)); }
+  catch (err) { fb = String(err); render(); fb = null; }
+};
+$("first").onclick = () => { stop(); go(0); };
+$("last").onclick = () => { stop(); go(steps.length - 1); };
+$("back").onclick = () => { stop(); go(cur - 1); };
+$("fwd").onclick = () => { stop(); go(cur + 1); };
+$("play").onclick = togglePlay;
+$("speed").oninput = () => { if (timer) { stop(); togglePlay(); } };
+$("scrub").oninput = e => { stop(); go(+e.target.value); };
+document.addEventListener("keydown", e => {
+  if (!G || e.target.id === "custom") return;
+  if (e.key === "Escape") return wipe(showHome);
+  if (mode === "play") { if (G.keys && G.keys[e.key]) { e.preventDefault(); at = null; pick(G.keys[e.key]); } return; }
+  if (e.key === "ArrowRight") { stop(); go(cur + 1); }
+  else if (e.key === "ArrowLeft") { stop(); go(cur - 1); }
+  else if (e.key === " ") { e.preventDefault(); togglePlay(); }
+  else if (e.key === "Home") { stop(); go(0); }
+  else if (e.key === "End") { stop(); go(steps.length - 1); }
+});
