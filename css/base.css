@@ -31,3 +31,18 @@ input[type=range] { accent-color: var(--ink); }
 @keyframes fade { from { opacity: 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes up { from { transform: translateY(110%); } }
+
+/* film grain, cursor ring, intro, page wipe */
+.grain { position: fixed; inset: -120px; z-index: 70; pointer-events: none; opacity: .08; will-change: transform; animation: grain .9s steps(5) infinite;
+         background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+@keyframes grain { 20% { transform: translate3d(-60px, 40px, 0); } 40% { transform: translate3d(50px, -80px, 0); } 60% { transform: translate3d(-90px, -30px, 0); } 80% { transform: translate3d(70px, 60px, 0); } }
+#cursor { position: fixed; left: 0; top: 0; width: 14px; height: 14px; margin: -7px; border-radius: 50%; z-index: 90; pointer-events: none;
+          backdrop-filter: invert(1); -webkit-backdrop-filter: invert(1); will-change: transform; }
+@media (pointer: coarse) { #cursor { display: none; } }
+#intro { position: fixed; inset: 0; z-index: 100; background: var(--bg); display: flex; align-items: flex-end; justify-content: space-between; padding: 4vw; transition: transform .9s var(--ease); }
+#intro.gone { transform: translateY(-100%); }
+#intro b { font: 400 clamp(90px, 22vw, 320px)/.8 var(--serif); font-style: italic; }
+#intro span { font: 500 11px var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+#curtain { position: fixed; inset: 0; z-index: 95; background: var(--ink); transform: scaleY(0); transform-origin: bottom; pointer-events: none; }
+#curtain.in { transform: scaleY(1); transition: transform .5s var(--ease); }
+#curtain.out { transform: scaleY(0); transform-origin: top; transition: transform .6s var(--ease); }
