@@ -4,7 +4,7 @@
 
 Umbra is a set of three short browser games built for a Design and Analysis of Algorithms course. In each one you take the place of a classic algorithm and make every decision it would make. Your moves are scored against par, the fewest decisions the algorithm itself needs.
 
-**Live:** https://umbra-lime-six.vercel.app
+**Live:** https://umbra-daa.vercel.app
 
 ## Missions
 
