@@ -8,7 +8,7 @@
 <p>Picture sixty answer scripts that need to go back to students in register-number order, dumped on a desk in no particular order. Sorting them alone, one sheet at a time, is painful. What works much better is splitting the pile with a friend, each of you sorting one half, and then putting the two sorted stacks side by side and repeatedly picking whichever top sheet has the smaller number.</p>
 <p>That last step is the whole idea behind <strong>merge sort</strong>. If you already have two sorted stacks, combining them is easy and fast. The clever part is realising you can keep splitting until every "stack" is a single sheet, which is sorted by definition, and then build everything back up with that same easy merge.</p>
 <p>In this post I go through how merge sort works, trace it by hand on a real example, prove its running time two different ways, and then check the theory against actual measurements from my own code. At the end there is a link to a browser game I built where you make every one of merge sort's decisions yourself.</p>
-<h2>1. The idea: divide and conquer</h2>
+<h3>1. The idea: divide and conquer</h3>
 <p>Merge sort is the textbook example of the <strong>divide and conquer</strong> strategy, which has three parts:</p>
 <ol>
 <li><strong>Divide</strong> the array into two halves at the middle index.</li>
@@ -16,7 +16,7 @@
 <li><strong>Combine</strong> the two sorted halves into one sorted array using a merge.</li>
 </ol>
 <p>The recursion stops when a piece has zero or one element, because such a piece is already sorted. Notice where the real work happens. In quicksort, the hard work is done <em>before</em> recursing (partitioning). In merge sort, dividing is trivial (just compute the midpoint) and all the work is done <em>after</em> recursing, in the merge.</p>
-<h2>2. Pseudocode</h2>
+<h3>2. Pseudocode</h3>
 <pre><code class="language-text">MERGE-SORT(A, l, r)
     if l &gt;= r:                     // 0 or 1 element: already sorted
         return
@@ -43,34 +43,36 @@ MERGE(A, l, m, r)
 <li><strong><code>&lt;=</code> and not <code>&lt;</code>.</strong> When <code>L[i]</code> and <code>R[j]</code> are equal, we take the one from the left half first. Since everything in the left half came earlier in the original array, equal elements keep their original order. That property is called <strong>stability</strong>, and it is the reason merge sort is the go-to algorithm when you sort records by one field after already sorting them by another (for example, sort students by name, then stable-sort by marks, and students with the same marks stay in alphabetical order).</li>
 <li><strong>The leftover copy needs no comparisons.</strong> Once one half runs out, whatever remains in the other half is already sorted and larger than everything placed so far, so it is copied straight across.</li>
 </ul>
-<h2>3. Working through an example</h2>
+<h3>3. Working through an example</h3>
 <p>Let us sort this array of eight numbers:</p>
 <pre><code class="language-text">A = [42, 17, 8, 93, 25, 61, 4, 50]
 </code></pre>
-<h3>Divide phase</h3>
+<h4>Divide phase</h4>
 <p>The midpoint of indices 0..7 is 3, so we split into <code>[42, 17, 8, 93]</code> and <code>[25, 61, 4, 50]</code>. Each of those splits again, and again, until we are left with eight single-element pieces. The top half of the figure below shows this. No comparisons have been made yet; dividing only computes indices.</p>
-<figure><img alt="Divide and merge phases for the example array" src="https://umbra-daa.vercel.app/blog/img/fig1_divide_and_merge.png" /><figcaption>Figure 1: The divide phase (blue) breaks the array into single elements. The merge phase (green) rebuilds it, sorted, one level at a time.</figcaption></figure>
-<h3>Merge phase</h3>
+<p><img alt="Divide and merge phases for the example array" src="https://umbra-daa.vercel.app/blog/img/fig1_divide_and_merge.png" /></p>
+<p><em>Figure 1: The divide phase (blue) breaks the array into single elements. The merge phase (green) rebuilds it, sorted, one level at a time.</em></p>
+<h4>Merge phase</h4>
 <p>Now we climb back up.</p>
 <p><strong>Level 1 (pairs).</strong> Each pair of singletons needs exactly one comparison:
 <code>[42] + [17] → [17, 42]</code>, <code>[8] + [93] → [8, 93]</code>, <code>[25] + [61] → [25, 61]</code>, <code>[4] + [50] → [4, 50]</code>. That is <strong>4 comparisons</strong>.</p>
 <p><strong>Level 2 (fours).</strong> Merging <code>[17, 42]</code> with <code>[8, 93]</code>:</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t1.png" /></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t1.png" /></p>
 <p>Three comparisons. The right side, <code>[25, 61] + [4, 50]</code>, also takes three and gives <code>[4, 25, 50, 61]</code>. Level total: <strong>6 comparisons</strong>.</p>
 <p><strong>Level 3 (the final merge).</strong> <code>[8, 17, 42, 93]</code> with <code>[4, 25, 50, 61]</code>:</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t2.png" /></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t2.png" /></p>
 <p>Seven comparisons, and the array is sorted.</p>
 <p><strong>Total: 4 + 6 + 7 = 17 comparisons</strong> for 8 elements. For comparison, n log₂ n = 8 × 3 = 24, and a quadratic algorithm could need up to n(n−1)/2 = 28. If you load this exact array into the simulator described in Section 10, the counter at the end reads 17, which is a nice sanity check that the hand trace and the code agree.</p>
 <p>A useful rule falls out of the tables: <strong>merging two sorted lists with a total of k elements takes at most k − 1 comparisons.</strong> Every comparison places one element, and the last element is always placed for free.</p>
-<h2>4. Time complexity</h2>
-<h3>Setting up the recurrence</h3>
+<h3>4. Time complexity</h3>
+<h4>Setting up the recurrence</h4>
 <p>Let T(n) be the time to merge sort n elements. Dividing takes constant time, the two recursive calls take T(n/2) each, and merging n elements takes at most cn time. So:</p>
 <pre><code class="language-text">T(n) = 2·T(n/2) + cn      for n &gt; 1
 T(1) = c
 </code></pre>
-<h3>Method 1: the recursion tree</h3>
+<h4>Method 1: the recursion tree</h4>
 <p>Draw each call as a node labelled with the non-recursive work it does.</p>
-<figure><img alt="Recursion tree for T(n) = 2T(n/2) + cn" src="https://umbra-daa.vercel.app/blog/img/fig2_recursion_tree_cost.png" /><figcaption>Figure 2: Each level costs cn in total, and there are log₂n + 1 levels.</figcaption></figure>
+<p><img alt="Recursion tree for T(n) = 2T(n/2) + cn" src="https://umbra-daa.vercel.app/blog/img/fig2_recursion_tree_cost.png" /></p>
+<p><em>Figure 2: Each level costs cn in total, and there are log₂n + 1 levels.</em></p>
 <ul>
 <li>The root does cn work.</li>
 <li>Level 1 has 2 nodes doing cn/2 each: total cn.</li>
@@ -81,57 +83,61 @@ T(1) = c
 <pre><code class="language-text">T(n) = cn · (log₂n + 1) = cn·log₂n + cn = Θ(n log n)
 </code></pre>
 <p>This picture is worth remembering because it explains <em>why</em> merge sort is n log n: the work per level never shrinks (you always touch all n elements), but the number of levels is only logarithmic.</p>
-<h3>Method 2: the Master Theorem</h3>
+<h4>Method 2: the Master Theorem</h4>
 <p>The recurrence has the form T(n) = a·T(n/b) + f(n) with a = 2, b = 2, f(n) = Θ(n).
 Compute n^(log_b a) = n^(log₂2) = n¹ = n. Since f(n) = Θ(n) matches this exactly, we are in <strong>Case 2</strong>, which gives T(n) = Θ(n log n). Both methods agree.</p>
-<h3>Best, average and worst case</h3>
+<h4>Best, average and worst case</h4>
 <p>Here is something that surprises people: merge sort does not care about the input order. Whether the array is sorted, reversed or random, it splits at the same midpoints and performs every merge. Only the number of comparisons <em>inside</em> each merge changes a little.</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t3.png" /></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t3.png" /></p>
 <p>For n = 8 the worst-case formula gives 8·3 − 8 + 1 = 17, which is exactly what our example needed, so that particular input happens to be a worst case. Feed the simulator an already sorted array of 8, such as 1 to 8, and the count drops to 12, which is (8/2)·3.</p>
 <p>That consistency is a big deal in practice. Quicksort is usually faster on average, but a bad pivot sequence pushes it to Θ(n²). Merge sort gives you a guarantee.</p>
-<h2>5. Space complexity</h2>
+<h3>5. Space complexity</h3>
 <p>Merge sort is <strong>not in-place</strong> in its standard form.</p>
 <ul>
 <li><strong>Auxiliary array: Θ(n).</strong> Merging needs somewhere to hold the two halves while it writes back into A. A good implementation allocates one buffer of size n once and reuses it, instead of creating new lists in every call.</li>
 <li><strong>Recursion stack: Θ(log n).</strong> The depth of recursion is ⌈log₂n⌉, and each frame stores only a few indices.</li>
 </ul>
 <p>Total extra space: Θ(n) + Θ(log n) = <strong>Θ(n)</strong>. This is merge sort's main weakness compared to heapsort (Θ(1) extra) and quicksort (Θ(log n) stack on average). In-place merging algorithms do exist, but they are complicated and slow enough that they are rarely used.</p>
-<h2>6. Checking the theory against real measurements</h2>
+<h3>6. Checking the theory against real measurements</h3>
 <p>Theory is nice, but I wanted to see the n log n curve with my own eyes. I wrote a Python implementation that counts every comparison (the code is linked at the end), ran it on random arrays from 1,000 to 64,000 elements, and ran insertion sort on the same inputs for contrast.</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t4.png" /></figure>
-<figure><img alt="Measured comparisons compared with n log n and insertion sort" src="https://umbra-daa.vercel.app/blog/img/fig3_measured_growth.png" /><figcaption>Figure 3: Left: merge sort tracks the n·log₂n line almost exactly, while insertion sort is off in a different league. Right: the ratio creeps up towards 1.</figcaption></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t4.png" /></p>
+<p><img alt="Measured comparisons compared with n log n and insertion sort" src="https://umbra-daa.vercel.app/blog/img/fig3_measured_growth.png" /></p>
+<p><em>Figure 3: Left: merge sort tracks the n·log₂n line almost exactly, while insertion sort is off in a different league. Right: the ratio creeps up towards 1.</em></p>
 <p>Three things stood out to me:</p>
 <ol>
 <li><strong>Doubling n slightly more than doubles the work</strong> for merge sort (8,695 → 19,430 is ×2.23). That extra bit beyond ×2 is the log factor showing up. For insertion sort, doubling n roughly <strong>quadruples</strong> the work, as you would expect from Θ(n²).</li>
 <li><strong>At n = 8,000, insertion sort needed about 172 times more comparisons.</strong> That gap only grows with n. I skipped insertion sort beyond 8,000 because it was getting slow to run.</li>
 <li><strong>The ratio sits below 1 and slowly rises.</strong> This matches the average-case formula n·log₂n − 1.25n: the −1.25n term matters less and less as n grows, so the ratio approaches 1 from below. It was satisfying to see a textbook formula appear in my own data.</li>
 </ol>
-<h2>7. How merge sort compares with other sorts</h2>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t5.png" /></figure>
+<h3>7. How merge sort compares with other sorts</h3>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_01-merge-sort_t5.png" /></p>
 <p>It is also worth knowing that no comparison-based sort can beat Θ(n log n) in the worst case. A decision tree that distinguishes all n! orderings must have height at least log₂(n!), which is Θ(n log n). So merge sort is <strong>asymptotically optimal</strong> among comparison sorts.</p>
-<h2>8. Where merge sort shows up in real life</h2>
+<h3>8. Where merge sort shows up in real life</h3>
 <ul>
 <li><strong>Python's <code>sorted()</code> and Java's <code>Arrays.sort</code> for objects</strong> use Timsort, a hybrid that finds already-sorted runs in the data and merges them using merge sort's merge step. It needs stability for the reason in Section 2.</li>
 <li><strong>Sorting data that does not fit in memory (external sorting).</strong> Databases sort huge tables by sorting chunks that fit in RAM, writing them to disk, and then merging the sorted chunks. Merging only needs to read each file sequentially, which is exactly what disks are good at.</li>
 <li><strong>Linked lists.</strong> Merge sort is the natural choice for sorting linked lists because merging only relinks pointers, so it needs no extra array and no random access.</li>
 <li><strong>Counting inversions.</strong> A small change to the merge step counts how many pairs are out of order in Θ(n log n). Whenever we take an element from the right half, every remaining element in the left half forms an inversion with it. This is used in ranking comparisons and recommendation systems.</li>
 </ul>
-<h2>9. Common mistakes worth watching for</h2>
+<h3>9. Common mistakes worth watching for</h3>
 <ul>
 <li><strong>Using <code>&lt;</code> instead of <code>&lt;=</code> in the merge.</strong> The output is still sorted, so tests with plain integers pass, but the sort silently becomes unstable. You only catch it by testing records with equal keys, which is why my test script includes a stability check.</li>
 <li><strong>Creating new lists in every recursive call.</strong> Writing <code>left = merge_sort(a[:mid])</code> is easy to read, but it allocates new lists at every level. Allocating one shared buffer up front, as my implementation does, avoids that overhead.</li>
 <li><strong>Computing the midpoint as <code>(l + r) / 2</code> in Java or C.</strong> For very large arrays, <code>l + r</code> can overflow a 32-bit integer. The safe version is <code>l + (r - l) / 2</code>. This exact bug sat in Java's standard library binary search for years before it was found in 2006.</li>
 <li><strong>Forgetting the leftover copy.</strong> If you stop when one side runs out, the remaining elements of the other side are lost.</li>
 </ul>
-<h2>10. Play it: Convoy</h2>
+<h3>10. Play it: Convoy</h3>
 <p>Reading a trace is one thing. Making the decisions yourself is better. <strong>Convoy</strong> is one of three missions in Umbra (umbra-daa.vercel.app), a browser game I built where you take the place of the algorithm.</p>
 <p>You start with a scrambled line of numbered pods. On the way down you choose where each piece is cut. On the way back up, two sorted lanes face each other and you pick which front pod goes next, by clicking it or pressing the left or right arrow key. The recursion tree builds above the board as you go, and every piece turns solid once it is sorted.</p>
-<figure><img alt="Convoy asking where merge sort should cut the array" src="https://umbra-daa.vercel.app/blog/img/b1_umbra_cut.png" /><figcaption>Figure 4: The divide step. The game stops and asks where merge sort cuts the array; clicking the wrong gap explains the midpoint formula.</figcaption></figure>
-<figure><img alt="Convoy in the middle of the final merge" src="https://umbra-daa.vercel.app/blog/img/b1_umbra_duel.png" /><figcaption>Figure 5: The final merge of the example from Section 3. 4 and 8 are already placed; the next decision is 17 against 25.</figcaption></figure>
-<figure><img alt="Convoy on Autopilot with the array fully sorted" src="https://umbra-daa.vercel.app/blog/img/b1_umbra_done.png" /><figcaption>Figure 6: Autopilot at the last step: sorted in 17 comparisons and 24 writes, matching the hand trace.</figcaption></figure>
+<p><img alt="Convoy asking where merge sort should cut the array" src="https://umbra-daa.vercel.app/blog/img/b1_umbra_cut.png" /></p>
+<p><em>Figure 4: The divide step. The game stops and asks where merge sort cuts the array; clicking the wrong gap explains the midpoint formula.</em></p>
+<p><img alt="Convoy in the middle of the final merge" src="https://umbra-daa.vercel.app/blog/img/b1_umbra_duel.png" /></p>
+<p><em>Figure 5: The final merge of the example from Section 3. 4 and 8 are already placed; the next decision is 17 against 25.</em></p>
+<p><img alt="Convoy on Autopilot with the array fully sorted" src="https://umbra-daa.vercel.app/blog/img/b1_umbra_done.png" /></p>
+<p><em>Figure 6: Autopilot at the last step: sorted in 17 comparisons and 24 writes, matching the hand trace.</em></p>
 <p>Your moves are scored against par, which is the number of decisions merge sort itself makes. A wrong pick tells you why the algorithm would have chosen differently, and equal pods come with a note on why the left one goes first. There is also an Autopilot mode that steps through the whole sort with an explanation of each move and the matching pseudocode line highlighted, and you can type in your own numbers.</p>
 <p>Each round uses a different kind of input: scrambled, nearly sorted, reversed, many duplicates and so on. A good experiment is to compare the comparison counts between them. The number of cuts and levels never changes; only the comparisons inside each merge do.</p>
-<h2>11. Summary</h2>
+<h3>11. Summary</h3>
 <ul>
 <li>Merge sort splits the array in half, sorts each half recursively, and merges the sorted halves.</li>
 <li>Merging two sorted lists of total size k takes at most k − 1 comparisons, in linear time.</li>
@@ -140,7 +146,7 @@ Compute n^(log_b a) = n^(log₂2) = n¹ = n. Since f(n) = Θ(n) matches this exa
 <li>It is <strong>stable</strong>, predictable and optimal among comparison sorts, which is why its merge step lives on inside Timsort, external sorting and database engines.</li>
 </ul>
 <p>The pile of answer scripts was a small problem, but the same halving trick scales to millions of records. That is what I find most satisfying about this algorithm: a very simple step, repeated at the right structure, gives a guarantee that the obvious approach cannot.</p>
-<h3>References</h3>
+<h4>References</h4>
 <ol>
 <li>T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, <em>Introduction to Algorithms</em>, 3rd ed., MIT Press, 2009. Chapter 2.3 (merge sort) and Chapter 4 (recurrences and the Master Theorem).</li>
 <li>D. E. Knuth, <em>The Art of Computer Programming, Vol. 3: Sorting and Searching</em>, 2nd ed., Addison-Wesley, 1998. Section 5.2.4.</li>

@@ -8,13 +8,13 @@
 <p>You have a bag that can carry 7 kg and four things you would like to take, each with a weight and a value. You cannot take everything. Which ones go in?</p>
 <p>The instinct is obvious: take whatever gives the most value per kilogram, and keep going until the bag is full. It feels right, it is fast, and for this problem it is <strong>wrong</strong>. Not always, but often enough that you cannot trust it.</p>
 <p>This is the <strong>0/1 knapsack problem</strong>, and it is the standard example of a problem where the greedy approach fails and <strong>dynamic programming</strong> succeeds. In this post I show the failure on a small example, build the dynamic programming solution step by step, fill in the table by hand, analyse the time and space, and measure it against brute force.</p>
-<h2>1. The problem</h2>
+<h3>1. The problem</h3>
 <p>We are given n items. Item i has a weight wᵢ and a value vᵢ. The knapsack has a capacity W. Choose a subset of the items so that the total weight is at most W and the total value is as large as possible.</p>
 <p>The "0/1" means each item is either left behind (0) or taken whole (1). No fractions, and no taking the same item twice.</p>
 <p>The example used throughout this post:</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t1.png" /></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t1.png" /></p>
 <p>Capacity <strong>W = 7</strong>.</p>
-<h2>2. Why greedy fails</h2>
+<h3>2. Why greedy fails</h3>
 <p>The greedy rule sorts by value per kilogram and takes whatever still fits:</p>
 <ol>
 <li><strong>D</strong> has the best ratio (1.40). Take it. Room left: 2.</li>
@@ -26,7 +26,7 @@
 <p>But <strong>B + C weighs exactly 7 and is worth 9.</strong> Greedy committed to D because it looked best in isolation, and that choice blocked a better combination that fills the bag completely.</p>
 <p>That is the heart of it. A greedy algorithm makes one locally best choice and never revisits it. That works for some problems; in my post on Dijkstra's algorithm there is a proof that the greedy choice there can never be undercut later. Here there is no such guarantee, because <strong>what the best first item is depends on what else you can fit alongside it.</strong></p>
 <p>One variation is worth knowing: if you are allowed to take <em>fractions</em> of items (the <strong>fractional knapsack</strong>), greedy by ratio is provably optimal. You would take all of D and two-thirds of B. It is the all-or-nothing rule that breaks it.</p>
-<h2>3. The other obvious approach: try everything</h2>
+<h3>3. The other obvious approach: try everything</h3>
 <p>Each item is either in or out, so there are 2ⁿ possible subsets. Checking all of them is guaranteed correct:</p>
 <pre><code class="language-text">BRUTE(i, room)                        // best value using items i..n with `room` capacity left
     if i &gt; n: return 0
@@ -37,7 +37,7 @@
 </code></pre>
 <p>This is Θ(2ⁿ). For 4 items that is 16 subsets. For 40 items it is over a trillion.</p>
 <p>But look at what the function depends on: only <strong>i</strong> (which item we are up to) and <strong>room</strong> (how much capacity is left). There are at most n values of i and W + 1 values of room. So there are only about <strong>n × W different questions</strong> this function can ever be asked, even though it is called up to 2ⁿ times. Most of those calls are repeats.</p>
-<h2>4. The dynamic programming idea</h2>
+<h3>4. The dynamic programming idea</h3>
 <p>Dynamic programming applies when a problem has two properties, and knapsack has both.</p>
 <ul>
 <li><strong>Optimal substructure.</strong> The best answer is built from best answers to smaller problems. If the best packing of a 7 kg bag includes item C, then whatever else is in the bag must be the best packing of the remaining 3 kg using the other items. If it were not, you could swap in a better one and improve the whole thing.</li>
@@ -50,7 +50,7 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
                └ skip it ┘  └──── take it ────┘
 </code></pre>
 <p>with K[0][c] = 0, because no items means no value. The answer to the whole problem is <strong>K[n][W]</strong>.</p>
-<h2>5. Pseudocode</h2>
+<h3>5. Pseudocode</h3>
 <pre><code class="language-text">KNAPSACK(w, v, n, W)
     for c = 0 to W:
         K[0][c] = 0
@@ -70,28 +70,29 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
 
     return K[n][W]
 </code></pre>
-<h2>6. Filling in the table</h2>
+<h3>6. Filling in the table</h3>
 <p>Here is the full table for the example. Each row adds one more item to the set we are allowed to use.</p>
-<figure><img alt="The dynamic programming table for the example, with the traceback path highlighted" src="https://umbra-daa.vercel.app/blog/img/b5_fig1_table.png" /><figcaption>Figure 1: The completed table. Darker cells hold larger values. The outlined cells show the walk back from the answer to find which items were chosen.</figcaption></figure>
+<p><img alt="The dynamic programming table for the example, with the traceback path highlighted" src="https://umbra-daa.vercel.app/blog/img/b5_fig1_table.png" /></p>
+<p><em>Figure 1: The completed table. Darker cells hold larger values. The outlined cells show the walk back from the answer to find which items were chosen.</em></p>
 <p><strong>Row A (weight 1, value 1).</strong> From capacity 1 upwards, A fits, so every cell is 1.</p>
 <p><strong>Row B (weight 3, value 4).</strong> Below capacity 3, B does not fit, so the values are copied from the row above. At capacity 3: skip gives 1, take gives 4 + K[A][0] = 4. Take. At capacity 4: take gives 4 + K[A][1] = 5, which is B and A together.</p>
 <p><strong>Row C (weight 4, value 5).</strong> The interesting cell is capacity 7: skip gives 5, take gives 5 + K[B][3] = 5 + 4 = <strong>9</strong>. That is C plus the best use of the remaining 3 kg, which the previous row already worked out was B.</p>
 <p><strong>Row D (weight 5, value 7).</strong> At capacity 7: skip gives 9, take gives 7 + K[C][2] = 7 + 1 = 8. Skip wins, so the cell stays at 9. This is the exact moment the table <em>rejects</em> the item greedy grabbed first.</p>
 <p>The answer is <strong>K[4][7] = 9</strong>.</p>
-<h3>Recovering the items</h3>
+<h4>Recovering the items</h4>
 <p>The table gives the value. To find the items, walk back from the bottom-right corner:</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t2.png" /></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t2.png" /></p>
 <p><strong>Take B and C: weight 7, value 9.</strong> That beats greedy's 8.</p>
-<h2>7. Time complexity</h2>
+<h3>7. Time complexity</h3>
 <p>The table has (n + 1) rows and (W + 1) columns, and each cell takes constant time: one comparison and one addition.</p>
 <pre><code class="language-text">Time = Θ(n · W)
 </code></pre>
 <p>The traceback adds Θ(n). There is no best or worst case; the table is always filled completely.</p>
-<h3>The catch: "pseudo-polynomial"</h3>
+<h4>The catch: "pseudo-polynomial"</h4>
 <p>Θ(nW) looks polynomial, but there is a subtlety. Running time is supposed to be measured against the <em>size of the input</em>, and the number W takes only about log₂W bits to write down. In terms of that size, W itself is exponential. Add one digit to W and the table gets ten times wider.</p>
 <p>So this is called a <strong>pseudo-polynomial</strong> algorithm: fast when W is a reasonable number, hopeless when W is astronomically large. That is consistent with the fact that 0/1 knapsack is <strong>NP-hard</strong>. No algorithm is known that is polynomial in the true input size, and most computer scientists believe none exists.</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t3.png" /></figure>
-<h2>8. Space complexity</h2>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t3.png" /></p>
+<h3>8. Space complexity</h3>
 <ul>
 <li><strong>Full table: Θ(nW).</strong> Needed if you want to recover which items were chosen.</li>
 <li><strong>One row: Θ(W).</strong> Each row only ever reads the row directly above it, so if you only need the best <em>value</em>, a single array is enough:</li>
@@ -101,24 +102,25 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
         K[c] = max(K[c], v[i] + K[c − w[i]])
 </code></pre>
 <p>The inner loop <strong>must run from right to left</strong>. Going right to left, K[c − w[i]] still holds the value from the previous item's row. Going left to right, it would already have been updated for the current item, which lets the item be taken twice. That is a different problem (the unbounded knapsack), and a very easy bug to introduce.</p>
-<h2>9. Checking it against real measurements</h2>
+<h3>9. Checking it against real measurements</h3>
 <p>I implemented all four approaches in Python: brute force, the full table, the one-row version, and greedy.</p>
 <p><strong>Correctness.</strong> On 2,000 random instances with up to 12 items, both dynamic programming versions matched brute force every time, and the items recovered by the traceback always fitted and added up to the reported value.</p>
 <p><strong>How often is greedy wrong?</strong> On those same 2,000 instances, greedy gave a worse answer than the optimum on <strong>330 of them, about 16%.</strong> One time in six is far too often to rely on.</p>
 <p><strong>Speed.</strong> Then I timed brute force against the one-row DP as the number of items grew, with capacity fixed at 60 and light items so that brute force could not get lucky by pruning.</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t4.png" /></figure>
-<figure><img alt="Measured running time of brute force and dynamic programming" src="https://umbra-daa.vercel.app/blog/img/b5_fig2_timing.png" /><figcaption>Figure 2: With a logarithmic time axis, brute force is a straight line upward, which is what exponential growth looks like. The DP line is almost flat.</figcaption></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t4.png" /></p>
+<p><img alt="Measured running time of brute force and dynamic programming" src="https://umbra-daa.vercel.app/blog/img/b5_fig2_timing.png" /></p>
+<p><em>Figure 2: With a logarithmic time axis, brute force is a straight line upward, which is what exponential growth looks like. The DP line is almost flat.</em></p>
 <p>The exact times depend on my laptop, but the pattern does not:</p>
 <ol>
 <li><strong>Every two extra items multiply brute force by about four</strong> (64.7 → 263.5 → 1,040.6). That is 2ⁿ. At this rate 40 items would take roughly three days, and 60 items thousands of years.</li>
 <li><strong>The DP barely moves</strong>, from 0.06 ms to 0.15 ms, because the table only grew from 600 to 1,320 cells.</li>
 <li>At n = 22, dynamic programming is about <strong>7,000 times faster</strong>, and the gap doubles with every item added.</li>
 </ol>
-<h2>10. Three design strategies, side by side</h2>
+<h3>10. Three design strategies, side by side</h3>
 <p>This is the fourth design strategy to come up in this series, and it helps to see them together.</p>
-<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t5.png" /></figure>
+<p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_05-knapsack_t5.png" /></p>
 <p>A reasonable rule of thumb: if a greedy idea comes to mind, try to find a small counterexample like the one in Section 2. If you find one, and the brute-force recursion keeps asking the same questions, it is a dynamic programming problem.</p>
-<h2>11. Where it is used</h2>
+<h3>11. Where it is used</h3>
 <ul>
 <li><strong>Budgeting and investment selection.</strong> Choose projects with the highest total return without exceeding a fixed budget.</li>
 <li><strong>Cargo and container loading</strong>, where the limit is weight or volume.</li>
@@ -126,7 +128,7 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
 <li><strong>Resource allocation in computing</strong>, such as choosing which jobs to run in a fixed time or memory budget.</li>
 <li><strong>Subset sum</strong>, the special case where value equals weight, underlies several questions in cryptography and complexity theory.</li>
 </ul>
-<h2>12. Common mistakes worth watching for</h2>
+<h3>12. Common mistakes worth watching for</h3>
 <ul>
 <li><strong>Trusting greedy.</strong> It is right often enough to pass a few test cases and wrong often enough to matter.</li>
 <li><strong>Running the one-row loop left to right.</strong> This silently solves the unbounded knapsack instead.</li>
@@ -135,7 +137,7 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
 <li><strong>Using it when W is enormous.</strong> With a capacity in the billions the table does not fit in memory. Other techniques, such as branch and bound or approximation schemes, are used instead.</li>
 <li><strong>Returning only the value</strong> when the question asked which items to take. That needs the full table, or extra bookkeeping.</li>
 </ul>
-<h2>13. Summary</h2>
+<h3>13. Summary</h3>
 <ul>
 <li>In the 0/1 knapsack problem each item is taken whole or not at all, and the goal is the highest total value within a weight limit.</li>
 <li><strong>Greedy by value per weight is not reliable</strong>: it was wrong on about 16% of random instances.</li>
@@ -144,7 +146,7 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
 <li>Θ(nW) is <strong>pseudo-polynomial</strong>: the problem is NP-hard, and the algorithm is only fast when W is modest.</li>
 </ul>
 <p>Greedy asks "what looks best right now?". Dynamic programming asks "what is best for every smaller version of this problem?" and then simply looks the answer up. It takes more memory, and in exchange it never has to guess.</p>
-<h3>References</h3>
+<h4>References</h4>
 <ol>
 <li>T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, <em>Introduction to Algorithms</em>, 3rd ed., MIT Press, 2009. Chapter 15 (dynamic programming) and Chapter 16.2 (greedy and the knapsack problems).</li>
 <li>J. Kleinberg and É. Tardos, <em>Algorithm Design</em>, Pearson, 2006. Chapter 6.4.</li>
