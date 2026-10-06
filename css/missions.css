@@ -1,0 +1,62 @@
+/* Board styles for each mission */
+
+/* convoy */
+.tree { position: relative; }
+.nd { position: absolute; padding: 0 3px; animation: ndin .5s var(--out) both; } @keyframes ndin { from { opacity: 0; transform: translateY(-12px); } }
+.nd .bx { display: flex; border: 1px solid var(--line); transition: border-color .3s, background .3s; }
+.nd i { flex: 1; min-width: 0; text-align: center; font: 11.5px/30px var(--mono); font-style: normal; color: var(--dim); transition: color .3s; }
+.nd.wait { opacity: .35; }
+.nd.active .bx { border-color: var(--ink); } .nd.active i { color: var(--ink); }
+.nd.split .bx { border-style: dashed; border-color: var(--dim); }
+.nd.merging .bx { background: var(--ink); border-color: var(--ink); } .nd.merging i { color: var(--bg); }
+.nd.done .bx { border-color: var(--ink); background: rgba(236,235,230,.13); } .nd.done i { color: var(--ink); }
+.arena { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 28px; min-height: 225px; }
+.duel { display: flex; justify-content: center; align-items: flex-end; gap: 34px; flex-wrap: wrap; }
+.pods { display: flex; gap: 6px; flex-wrap: wrap; }
+.vs { font: italic 400 34px/1 var(--serif); color: var(--dim); padding-bottom: 18px; }
+.out { margin-top: 30px; display: flex; flex-direction: column; align-items: center; }
+.cut { display: flex; justify-content: center; align-items: center; margin-top: 10px; }
+.gap { width: 26px; height: 100px; padding: 0; border: 0; background: none !important; }
+.gap::after { content: ""; position: absolute; left: 12px; top: 50%; width: 1px; height: 30%; translate: 0 -50%; background: var(--faint); transition: height .35s var(--out), background .2s, width .2s; }
+.gap[data-pick]:hover::after, .gap.on::after { height: 100%; background: var(--ink); width: 2px; }
+.gap:disabled { opacity: 1; } .gap:disabled:not(.on)::after { background: transparent; }
+.cap { text-align: center; }
+
+/* signal lock */
+.target { display: flex; align-items: center; justify-content: center; gap: 28px; margin: 6px 0 38px; }
+.radar { width: 104px; height: 104px; border-radius: 50%; border: 1px solid var(--line); position: relative; overflow: hidden; background: repeating-radial-gradient(circle, transparent 0 16px, rgba(236,235,230,.08) 16px 17px); }
+.radar::before { content: ""; position: absolute; inset: 0; background: conic-gradient(from 0deg, rgba(236,235,230,.6), transparent 26%); animation: spin 2.8s linear infinite; }
+.radar.lock { border-color: var(--ink); } .radar.lock::before { background: var(--ink); animation: fade .6s; inset: 34px; border-radius: 50%; }
+.target div span { font: 500 10px var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--dim); display: block; }
+.target b { display: block; font: italic 400 104px/.9 var(--serif); letter-spacing: -.03em; }
+.prow { display: flex; gap: 5px; justify-content: center; }
+.pc { flex: 1; max-width: 58px; min-width: 0; text-align: center; position: relative; transition: opacity .5s, transform .45s var(--out); will-change: transform; }
+.pc b { display: grid; place-items: center; height: 84px; border: 1px solid var(--line); font: 500 clamp(10px, 1.4vw, 17px) var(--mono); transition: border-color .2s, background .3s, color .3s;
+        background: repeating-linear-gradient(135deg, rgba(236,235,230,.07) 0 1px, transparent 1px 6px); }
+.pc.fl b { background: none; border-color: var(--dim); }
+.pc.mid b { border-color: var(--ink); }
+.pc.mid::after { content: ""; position: absolute; left: 50%; top: 58px; width: 60px; height: 60px; margin: -30px; border-radius: 50%; border: 1px solid var(--ink); animation: sonar 1s var(--out) both; pointer-events: none; }
+@keyframes sonar { from { transform: scale(.2); opacity: 1; } to { transform: scale(3); opacity: 0; } }
+.pc.hit b { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.pc.out { opacity: .1; transform: scaleY(.82); }
+.pc small { display: block; font: 10px var(--mono); color: var(--faint); margin-top: 7px; }
+.pc em { display: block; font: normal 500 9px var(--mono); color: var(--ink); height: 16px; text-transform: uppercase; letter-spacing: .14em; }
+.pc[data-pick]:hover { transform: translate3d(0, -9px, 0); } .pc[data-pick]:hover b { border-color: var(--ink); background: rgba(236,235,230,.12); }
+
+/* starlane */
+.graph { width: 100%; max-height: 440px; display: block; overflow: visible; }
+.edge line { stroke: rgba(236,235,230,.18); stroke-width: 1; transition: stroke .3s, stroke-width .3s; }
+.edge rect { fill: var(--bg); stroke: var(--line); } .edge text { fill: var(--dim); font: 500 11px var(--mono); text-anchor: middle; }
+.edge.tree line { stroke: var(--ink); stroke-width: 2; } .edge.tree rect { stroke: var(--ink); } .edge.tree text { fill: var(--ink); }
+.edge.relax line { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 3 7; animation: march .45s linear infinite; } @keyframes march { to { stroke-dashoffset: -20; } }
+.edge.relax rect { fill: var(--ink); } .edge.relax text { fill: var(--bg); }
+.node { transition: transform .3s var(--out); transform-box: fill-box; transform-origin: center; }
+.node .halo { fill: none; stroke: none; transform-box: fill-box; transform-origin: center; }
+.node .core { fill: var(--bg); stroke: var(--faint); stroke-width: 1; transition: stroke .3s, fill .4s; }
+.node .ds { fill: var(--faint); font: 500 15px var(--mono); text-anchor: middle; transition: fill .3s; }
+.node .nm { fill: var(--dim); font: 500 9.5px var(--mono); letter-spacing: .18em; text-anchor: middle; text-transform: uppercase; }
+.node.seen .core { stroke: var(--ink); } .node.seen .ds { fill: var(--ink); }
+.node.cur .halo { stroke: var(--ink); stroke-dasharray: 2 5; transform: scale(1.4); animation: spinh 6s linear infinite; } @keyframes spinh { to { transform: scale(1.4) rotate(360deg); } }
+.node.set .core { fill: var(--ink); stroke: var(--ink); } .node.set .ds { fill: var(--bg); } .node.set .nm { fill: var(--ink); }
+.node.new .halo { stroke: var(--ink); stroke-dasharray: none; animation: nova 1s var(--out) both; } @keyframes nova { from { transform: scale(.6); opacity: 1; } to { transform: scale(2.8); opacity: 0; } }
+.node[data-pick]:hover { transform: scale(1.16); } .node[data-pick]:hover .core { stroke: var(--ink); stroke-width: 2; }
