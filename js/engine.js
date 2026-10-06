@@ -142,3 +142,21 @@ function pick(v) {
   }
   at = null;
 }
+
+function finish() {
+  done = true;
+  const acc = st.par / Math.max(st.you, 1);
+  const g = G.grade ? G.grade(st, live) : st.you === st.par ? "S" : acc >= .9 ? "A" : acc >= .75 ? "B" : "C";
+  const old = store.get("rank-" + G.id);
+  if (!old || "SABC".indexOf(g) < "SABC".indexOf(old)) store.set("rank-" + G.id, g);
+  const diff = st.you - st.par;
+  $("end").innerHTML = `<div><div class="ring"><b>${g}</b></div><div class="rk">${RANK[g]}</div>
+    <div class="sc">Par ${st.par} · You ${st.you} · ${diff === 0 ? "on par" : diff < 0 ? `${-diff} under` : `${diff} over`} · best streak ${st.best}</div>
+    <p>${G.takeaway}</p>
+    <div class="acts"><button class="go" data-end="new">New round</button><button data-end="retry">Fly it again</button>
+    <button data-end="watch">Watch the autopilot</button><button data-end="link">Copy challenge link</button></div></div>`;
+  $("end").hidden = false;
+  render();
+  const r = $("stagewrap").getBoundingClientRect(), n = g === "S" ? 5 : g === "A" ? 3 : 1;
+  for (let k = 0; k < n; k++) setTimeout(() => burst(r.left + r.width * (.25 + Math.random() * .5), r.top + r.height * (.25 + Math.random() * .4), pickOne(["#ecebe6", "#ecebe6", "#ecebe6", "#ecebe6"]), 40, 6), k * 220);
+}
