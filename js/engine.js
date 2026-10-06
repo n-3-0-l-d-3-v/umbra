@@ -91,3 +91,13 @@ function render() {
   $("back").disabled = $("first").disabled = cur === 0;
   $("fwd").disabled = $("last").disabled = cur === steps.length - 1;
 }
+
+/* ---- autopilot ---- */
+function stop() { clearTimeout(timer); clearInterval(timer); timer = null; $("play").textContent = "▶ Run"; }
+function go(k) { cur = Math.max(0, Math.min(steps.length - 1, k)); render(); if (cur === steps.length - 1) stop(); }
+function togglePlay() {
+  if (timer) return stop();
+  if (cur === steps.length - 1) cur = 0;
+  $("play").textContent = "⏸ Hold";
+  timer = setInterval(() => go(cur + 1), 1500 - $("speed").value * 135);
+}
