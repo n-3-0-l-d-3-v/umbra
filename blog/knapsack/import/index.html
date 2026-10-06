@@ -24,7 +24,7 @@
 </ol>
 <p>Greedy ends with <strong>D + A: weight 6, value 8.</strong></p>
 <p>But <strong>B + C weighs exactly 7 and is worth 9.</strong> Greedy committed to D because it looked best in isolation, and that choice blocked a better combination that fills the bag completely.</p>
-<p>That is the heart of it. A greedy algorithm makes one locally best choice and never revisits it. That works for some problems; in my <a href="https://umbra-daa.vercel.app/blog/dijkstra/">post on Dijkstra's algorithm</a> there is a proof that the greedy choice there can never be undercut later. Here there is no such guarantee, because <strong>what the best first item is depends on what else you can fit alongside it.</strong></p>
+<p>That is the heart of it. A greedy algorithm makes one locally best choice and never revisits it. That works for some problems; in my  there is a proof that the greedy choice there can never be undercut later. Here there is no such guarantee, because <strong>what the best first item is depends on what else you can fit alongside it.</strong></p>
 <p>One variation is worth knowing: if you are allowed to take <em>fractions</em> of items (the <strong>fractional knapsack</strong>), greedy by ratio is provably optimal. You would take all of D and two-thirds of B. It is the all-or-nothing rule that breaks it.</p>
 <h2>3. The other obvious approach: try everything</h2>
 <p>Each item is either in or out, so there are 2ⁿ possible subsets. Checking all of them is guaranteed correct:</p>

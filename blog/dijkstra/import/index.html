@@ -110,7 +110,7 @@
 <li><strong>Stopping too early or too late.</strong> If you only need one destination, you can stop as soon as it is <em>settled</em>. Stopping when it is first <em>reached</em> is wrong.</li>
 </ul>
 <h2>13. Play it: Starlane</h2>
-<p>The settle-then-relax rhythm is much easier to absorb by doing it. <strong>Starlane</strong> is one of three missions in <a href="https://umbra-daa.vercel.app">Umbra</a>, a browser game I built where you take the place of the algorithm.</p>
+<p>The settle-then-relax rhythm is much easier to absorb by doing it. <strong>Starlane</strong> is one of three missions in  (umbra-daa.vercel.app), a browser game I built where you take the place of the algorithm.</p>
 <p>Each round generates a fresh star map: six to eight stars, jump lanes with fuel costs, and a random home star. Every turn you click the star Dijkstra would settle next. Pick correctly and you watch each of its lanes get relaxed. Pick wrong and you are told why: that star is already settled, or has not been reached yet, or another one is closer.</p>
 <figure><img alt="Starlane in Manual mode, waiting for the player to choose the next star" src="https://umbra-daa.vercel.app/blog/img/b3_umbra_choose.png" /><figcaption>Figure 3: The same graph as this post, loaded into Starlane. A is settled, B is at 4 and C is at 2. Which one is next?</figcaption></figure>
 <figure><img alt="Starlane relaxing an edge on Autopilot" src="https://umbra-daa.vercel.app/blog/img/b3_umbra_relax.png" /><figcaption>Figure 4: Autopilot relaxing the lane from B to D: 3 + 5 = 8 beats 10, so D drops to 8. This is step 3 of the table above.</figcaption></figure>

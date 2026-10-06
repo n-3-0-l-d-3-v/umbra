@@ -105,7 +105,7 @@ A    =  3   9  14  22  27  31  40  48  55  61  70  76  83  90  97
 </ul>
 <p>My test script checks the implementation against Python's <code>bisect</code> module for every possible target on arrays of every size from 0 to 59, which covers each of these edge cases, including empty arrays and absent values.</p>
 <h2>10. Play it: Signal Lock</h2>
-<p>To make the halving something you can feel, I built <strong>Signal Lock</strong>, one of three missions in <a href="https://umbra-daa.vercel.app">Umbra</a>, a browser game where you take the place of the algorithm.</p>
+<p>To make the halving something you can feel, I built <strong>Signal Lock</strong>, one of three missions in  (umbra-daa.vercel.app), a browser game where you take the place of the algorithm.</p>
 <p>A beacon is hidden in a sorted row of face-down sectors. Every ping costs one probe, and par is ⌊log₂n⌋ + 1. Ping wherever you like: the game dims everything your ping ruled out, and if you did not choose the middle, it tells you how many candidates your choice risked leaving compared with the middle. About one round in five, the beacon is not there at all, and you have to prove it.</p>
 <figure><img alt="Signal Lock on autopilot, part-way through a search" src="https://umbra-daa.vercel.app/blog/img/b2_umbra_scan.png" /><figcaption>Figure 3: Signal Lock on Autopilot, searching the same array as this post for 83. Index 11 has just been pinged, and the left side is already ruled out.</figcaption></figure>
 <figure><img alt="Signal Lock after the target has been found" src="https://umbra-daa.vercel.app/blog/img/b2_umbra_found.png" /><figcaption>Figure 4: Locked on in 4 pings, with the matching line of pseudocode highlighted.</figcaption></figure>
