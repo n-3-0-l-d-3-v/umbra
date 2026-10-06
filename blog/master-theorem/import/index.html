@@ -50,7 +50,7 @@ a = 1, b = 2, so c = 0 and n^c = 1. f(n) = n grows much faster. Regularity: f(n/
 <p>Look at the two matrix rows. Strassen's whole contribution was finding a way to use 7 recursive multiplications instead of 8. That one change moves the critical exponent from 3 to 2.807. When the leaves dominate, <strong>reducing the number of subproblems is the only thing that helps</strong>; making the combine step faster would change nothing.</p>
 <h3>6. A real case: Karatsuba multiplication</h3>
 <p>Multiplying two n-digit numbers the school way takes n² single-digit multiplications. Split each number in half instead:</p>
-<pre>x = a · 10^h + b          y = c · 10^h + d          (h = n/2)<br><br>x · y = ac · 10^(2h) + (ad + bc) · 10^h + bd</pre>
+<pre>x = a · 10^h + b          y = c · 10^h + d          (h = n/2)<br>&nbsp;<br>x · y = ac · 10^(2h) + (ad + bc) · 10^h + bd</pre>
 <p>That needs four half-size products: ac, ad, bc and bd. The recurrence is T(n) = 4T(n/2) + n, and the Master Theorem gives Θ(n²). No improvement.</p>
 <p>In 1960 Anatoly Karatsuba, then a 23-year-old student, noticed that the middle term can be had from one product instead of two:</p>
 <pre>ad + bc = (a + b)(c + d) − ac − bd</pre>
