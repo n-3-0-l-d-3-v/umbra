@@ -32,3 +32,7 @@
 .scroll i { width: 1px; height: 54px; background: var(--line); position: relative; overflow: hidden; }
 .scroll i::after { content: ""; position: absolute; inset: 0; background: var(--ink); animation: drip 2s var(--ease) infinite; }
 @keyframes drip { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+.ticker { margin: 0 -4vw; border-block: 1px solid var(--line); overflow: hidden; display: flex; padding: 18px 0; }
+.tk { flex: none; white-space: nowrap; font: italic 400 clamp(28px, 4vw, 56px)/1 var(--serif); will-change: transform; animation: tick 80s linear infinite; }
+.tk span { font-style: normal; color: var(--faint); margin: 0 .6em; }
+@keyframes tick { to { transform: translate3d(-100%, 0, 0); } }
