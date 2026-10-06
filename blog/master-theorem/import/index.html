@@ -10,8 +10,7 @@
 <p>In this post I build the theorem from that question, use it on real algorithms, check its predictions by brute force, and show where it stops working.</p>
 <h3>1. From an algorithm to a recurrence</h3>
 <p>A divide-and-conquer algorithm does three things: it splits the problem into smaller pieces, solves each piece recursively, and combines the results. Its running time has the same shape:</p>
-<pre><code class="language-text">T(n) = a · T(n / b) + f(n)
-</code></pre>
+<pre>T(n) = a · T(n / b) + f(n)</pre>
 <ul>
 <li><strong>a</strong> is how many subproblems it creates.</li>
 <li><strong>n / b</strong> is the size of each one.</li>
@@ -34,19 +33,7 @@
 <p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_04-master-theorem_t1.png" /></p>
 <p>"Polynomially" matters: the gap has to be a factor of n^ε for some ε &gt; 0, not just a logarithm. Case 3 also needs a mild regularity condition, a · f(n/b) ≤ k · f(n) for some constant k &lt; 1, which holds for every ordinary polynomial f.</p>
 <h3>4. A procedure for using it</h3>
-<pre><code class="language-text">SOLVE-RECURRENCE(a, b, f)                 // T(n) = a·T(n/b) + f(n)
-    c = log_b(a)                          // critical exponent
-    compare f(n) with n^c:
-        if f(n) = O(n^(c − ε)) for some ε &gt; 0:
-            return Θ(n^c)                 // Case 1: leaves win
-        if f(n) = Θ(n^c):
-            return Θ(n^c · log n)         // Case 2: tie
-        if f(n) = Ω(n^(c + ε)) for some ε &gt; 0
-           and a·f(n/b) ≤ k·f(n) for some k &lt; 1:
-            return Θ(f(n))                // Case 3: root wins
-    otherwise:
-        the theorem does not apply; draw the recursion tree
-</code></pre>
+<pre>SOLVE-RECURRENCE(a, b, f)                 // T(n) = a·T(n/b) + f(n)<br>&nbsp;&nbsp;&nbsp;&nbsp;c = log_b(a)                          // critical exponent<br>&nbsp;&nbsp;&nbsp;&nbsp;compare f(n) with n^c:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if f(n) = O(n^(c − ε)) for some ε &gt; 0:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return Θ(n^c)                 // Case 1: leaves win<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if f(n) = Θ(n^c):<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return Θ(n^c · log n)         // Case 2: tie<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if f(n) = Ω(n^(c + ε)) for some ε &gt; 0<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and a·f(n/b) ≤ k·f(n) for some k &lt; 1:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return Θ(f(n))                // Case 3: root wins<br>&nbsp;&nbsp;&nbsp;&nbsp;otherwise:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the theorem does not apply; draw the recursion tree</pre>
 <p>In practice it is three steps: read off a, b and f; compute c = log_b a; compare.</p>
 <h3>5. Worked examples</h3>
 <p><strong>Binary search: T(n) = T(n/2) + 1.</strong>
@@ -63,24 +50,12 @@ a = 1, b = 2, so c = 0 and n^c = 1. f(n) = n grows much faster. Regularity: f(n/
 <p>Look at the two matrix rows. Strassen's whole contribution was finding a way to use 7 recursive multiplications instead of 8. That one change moves the critical exponent from 3 to 2.807. When the leaves dominate, <strong>reducing the number of subproblems is the only thing that helps</strong>; making the combine step faster would change nothing.</p>
 <h3>6. A real case: Karatsuba multiplication</h3>
 <p>Multiplying two n-digit numbers the school way takes n² single-digit multiplications. Split each number in half instead:</p>
-<pre><code class="language-text">x = a · 10^h + b          y = c · 10^h + d          (h = n/2)
-
-x · y = ac · 10^(2h) + (ad + bc) · 10^h + bd
-</code></pre>
+<pre>x = a · 10^h + b          y = c · 10^h + d          (h = n/2)<br><br>x · y = ac · 10^(2h) + (ad + bc) · 10^h + bd</pre>
 <p>That needs four half-size products: ac, ad, bc and bd. The recurrence is T(n) = 4T(n/2) + n, and the Master Theorem gives Θ(n²). No improvement.</p>
 <p>In 1960 Anatoly Karatsuba, then a 23-year-old student, noticed that the middle term can be had from one product instead of two:</p>
-<pre><code class="language-text">ad + bc = (a + b)(c + d) − ac − bd
-</code></pre>
+<pre>ad + bc = (a + b)(c + d) − ac − bd</pre>
 <p>Since ac and bd are needed anyway, the whole thing takes <strong>three</strong> half-size multiplications:</p>
-<pre><code class="language-text">KARATSUBA(x, y, n)
-    if n == 1: return x · y
-    h = n / 2
-    split x into a, b and y into c, d
-    P1 = KARATSUBA(a, c, h)
-    P2 = KARATSUBA(b, d, h)
-    P3 = KARATSUBA(a + b, c + d, h)
-    return P1 · 10^(2h) + (P3 − P1 − P2) · 10^h + P2
-</code></pre>
+<pre>KARATSUBA(x, y, n)<br>&nbsp;&nbsp;&nbsp;&nbsp;if n == 1: return x · y<br>&nbsp;&nbsp;&nbsp;&nbsp;h = n / 2<br>&nbsp;&nbsp;&nbsp;&nbsp;split x into a, b and y into c, d<br>&nbsp;&nbsp;&nbsp;&nbsp;P1 = KARATSUBA(a, c, h)<br>&nbsp;&nbsp;&nbsp;&nbsp;P2 = KARATSUBA(b, d, h)<br>&nbsp;&nbsp;&nbsp;&nbsp;P3 = KARATSUBA(a + b, c + d, h)<br>&nbsp;&nbsp;&nbsp;&nbsp;return P1 · 10^(2h) + (P3 − P1 − P2) · 10^h + P2</pre>
 <p>T(n) = 3T(n/2) + n, which is Case 1: Θ(n^1.585). Shortly before, Kolmogorov had conjectured that n² was the best possible. This algorithm disproved it.</p>
 <h3>7. Checking the theorem by brute force</h3>
 <p>The Master Theorem makes predictions, so they can be tested. I did two experiments.</p>

@@ -18,19 +18,7 @@
 <p>One comparison, and half of the remaining candidates are gone. Repeat on what is left until you either find the target or run out of candidates.</p>
 <p>This strategy is called <strong>decrease and conquer</strong>. Unlike merge sort, which splits a problem into two halves and solves <em>both</em>, binary search splits it in two and only ever continues into <em>one</em>.</p>
 <h3>2. Pseudocode</h3>
-<pre><code class="language-text">BINARY-SEARCH(A, t)                  // A is sorted in ascending order
-    lo = 0
-    hi = length(A) - 1
-    while lo &lt;= hi:
-        mid = floor((lo + hi) / 2)
-        if A[mid] == t:
-            return mid               // found
-        if A[mid] &lt; t:
-            lo = mid + 1             // t can only be to the right
-        else:
-            hi = mid - 1             // t can only be to the left
-    return NOT-FOUND
-</code></pre>
+<pre>BINARY-SEARCH(A, t)                  // A is sorted in ascending order<br>&nbsp;&nbsp;&nbsp;&nbsp;lo = 0<br>&nbsp;&nbsp;&nbsp;&nbsp;hi = length(A) - 1<br>&nbsp;&nbsp;&nbsp;&nbsp;while lo &lt;= hi:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mid = floor((lo + hi) / 2)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if A[mid] == t:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return mid               // found<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if A[mid] &lt; t:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lo = mid + 1             // t can only be to the right<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;hi = mid - 1             // t can only be to the left<br>&nbsp;&nbsp;&nbsp;&nbsp;return NOT-FOUND</pre>
 <p>Three details carry all the correctness:</p>
 <ul>
 <li><strong><code>lo</code> and <code>hi</code> are both inclusive.</strong> The candidates are exactly the indices from <code>lo</code> to <code>hi</code>. When <code>lo &gt; hi</code> there are none left.</li>
@@ -40,9 +28,7 @@
 <p>The invariant that holds every time the loop condition is tested is: <em>if the target is in the array at all, its index is between <code>lo</code> and <code>hi</code>.</em> Each iteration keeps that true while shrinking the range, so the loop must end with either the answer or an empty range.</p>
 <h3>3. Working through an example</h3>
 <p>Here is a sorted array of 15 numbers. We want to find <strong>83</strong>.</p>
-<pre><code class="language-text">index:  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14
-A    =  3   9  14  22  27  31  40  48  55  61  70  76  83  90  97
-</code></pre>
+<pre>index:  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14<br>A    =  3   9  14  22  27  31  40  48  55  61  70  76  83  90  97</pre>
 <p><img alt="Binary search for 83, one row per probe" src="https://umbra-daa.vercel.app/blog/img/b2_fig1_halving.png" /></p>
 <p><em>Figure 1: Each row is one probe. Blue cells are still candidates, the highlighted cell is the one being checked, and grey cells have been ruled out.</em></p>
 <p><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_02-binary-search_t1.png" /></p>
@@ -54,13 +40,11 @@ A    =  3   9  14  22  27  31  40  48  55  61  70  76  83  90  97
 <h3>4. Time complexity</h3>
 <h4>Counting the halvings</h4>
 <p>After each failed probe, at most half of the candidates survive. Starting from n candidates, after k probes at most n / 2ᵏ remain. The search must stop once that drops below 1:</p>
-<pre><code class="language-text">n / 2^k &lt; 1    ⟹    k &gt; log₂ n
-</code></pre>
+<pre>n / 2^k &lt; 1    ⟹    k &gt; log₂ n</pre>
 <p>So the worst case is <strong>⌊log₂n⌋ + 1</strong> probes. For n = 15 that is 3 + 1 = 4, which is exactly what both examples above needed.</p>
 <h4>As a recurrence</h4>
 <p>Each call does a constant amount of work and then continues on half the input:</p>
-<pre><code class="language-text">T(n) = T(n/2) + c,      T(1) = c
-</code></pre>
+<pre>T(n) = T(n/2) + c,      T(1) = c</pre>
 <p>Unrolling it: T(n) = c + c + … + c, once per halving, which gives c · (log₂n + 1) = <strong>Θ(log n)</strong>.</p>
 <p>The Master Theorem agrees. With a = 1, b = 2 and f(n) = Θ(1), we get n^(log_b a) = n⁰ = 1, which matches f(n). That is Case 2, so T(n) = Θ(log n).</p>
 <h4>Best, average and worst</h4>

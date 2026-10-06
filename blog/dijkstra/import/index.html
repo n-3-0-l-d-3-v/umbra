@@ -20,22 +20,7 @@
 </ol>
 <p>That is the whole algorithm. It is <strong>greedy</strong>: at every step it makes the choice that looks best right now (the closest unsettled node) and never goes back on it. Greedy strategies often give wrong answers. Section 5 explains why this one does not.</p>
 <h3>3. Pseudocode</h3>
-<pre><code class="language-text">DIJKSTRA(G, s)
-    for each node v in G:
-        dist[v] = ∞
-        prev[v] = NONE
-    dist[s] = 0
-    Q = all nodes in G                      // the unsettled nodes
-
-    while Q is not empty:
-        u = node in Q with the smallest dist     // settle
-        remove u from Q
-        for each edge (u, v) with v still in Q:  // relax
-            if dist[u] + w(u, v) &lt; dist[v]:
-                dist[v] = dist[u] + w(u, v)
-                prev[v] = u
-    return dist, prev
-</code></pre>
+<pre>DIJKSTRA(G, s)<br>&nbsp;&nbsp;&nbsp;&nbsp;for each node v in G:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dist[v] = ∞<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prev[v] = NONE<br>&nbsp;&nbsp;&nbsp;&nbsp;dist[s] = 0<br>&nbsp;&nbsp;&nbsp;&nbsp;Q = all nodes in G                      // the unsettled nodes<br><br>&nbsp;&nbsp;&nbsp;&nbsp;while Q is not empty:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;u = node in Q with the smallest dist     // settle<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remove u from Q<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for each edge (u, v) with v still in Q:  // relax<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if dist[u] + w(u, v) &lt; dist[v]:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dist[v] = dist[u] + w(u, v)<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;prev[v] = u<br>&nbsp;&nbsp;&nbsp;&nbsp;return dist, prev</pre>
 <p><code>prev</code> is what turns a table of distances into actual routes. To read off the shortest path to any node, start there and follow <code>prev</code> backwards until you reach the source.</p>
 <h3>4. Working through an example</h3>
 <p>Here is a graph with six nodes and nine edges. The source is <strong>A</strong>.</p>
@@ -54,10 +39,7 @@
 <p>This is the same reasoning as: "every place I have not finished is at least this far away, and distances only grow, so nothing can come back and undercut the closest one."</p>
 <h3>6. What goes wrong with a negative edge</h3>
 <p>The proof leans entirely on "the rest of the route can only add to the cost". Take that away and the algorithm fails.</p>
-<pre><code class="language-text">Edges:   A → B  cost 2
-         A → C  cost 5
-         C → B  cost −4
-</code></pre>
+<pre>Edges:   A → B  cost 2<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A → C  cost 5<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C → B  cost −4</pre>
 <p>From A, Dijkstra sees B at 2 and C at 5. B is closest, so B is settled at 2 and never looked at again. But A → C → B costs 5 + (−4) = 1, which is better. The algorithm reports 2 and is wrong.</p>
 <p>For graphs that can have negative edges, the <strong>Bellman–Ford</strong> algorithm is the correct tool. It is slower, at Θ(V · E), but it does not assume that settled means final.</p>
 <h3>7. Time complexity</h3>

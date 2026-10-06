@@ -17,26 +17,7 @@
 </ol>
 <p>The recursion stops when a piece has zero or one element, because such a piece is already sorted. Notice where the real work happens. In quicksort, the hard work is done <em>before</em> recursing (partitioning). In merge sort, dividing is trivial (just compute the midpoint) and all the work is done <em>after</em> recursing, in the merge.</p>
 <h3>2. Pseudocode</h3>
-<pre><code class="language-text">MERGE-SORT(A, l, r)
-    if l &gt;= r:                     // 0 or 1 element: already sorted
-        return
-    m = floor((l + r) / 2)
-    MERGE-SORT(A, l, m)            // sort left half
-    MERGE-SORT(A, m + 1, r)        // sort right half
-    MERGE(A, l, m, r)              // combine
-
-MERGE(A, l, m, r)
-    L = copy of A[l..m]
-    R = copy of A[m+1..r]
-    i = 0, j = 0, k = l
-    while i &lt; len(L) and j &lt; len(R):
-        if L[i] &lt;= R[j]:
-            A[k] = L[i];  i = i + 1
-        else:
-            A[k] = R[j];  j = j + 1
-        k = k + 1
-    copy any remaining elements of L, then of R, into A[k..r]
-</code></pre>
+<pre>MERGE-SORT(A, l, r)<br>&nbsp;&nbsp;&nbsp;&nbsp;if l &gt;= r:                     // 0 or 1 element: already sorted<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return<br>&nbsp;&nbsp;&nbsp;&nbsp;m = floor((l + r) / 2)<br>&nbsp;&nbsp;&nbsp;&nbsp;MERGE-SORT(A, l, m)            // sort left half<br>&nbsp;&nbsp;&nbsp;&nbsp;MERGE-SORT(A, m + 1, r)        // sort right half<br>&nbsp;&nbsp;&nbsp;&nbsp;MERGE(A, l, m, r)              // combine<br><br>MERGE(A, l, m, r)<br>&nbsp;&nbsp;&nbsp;&nbsp;L = copy of A[l..m]<br>&nbsp;&nbsp;&nbsp;&nbsp;R = copy of A[m+1..r]<br>&nbsp;&nbsp;&nbsp;&nbsp;i = 0, j = 0, k = l<br>&nbsp;&nbsp;&nbsp;&nbsp;while i &lt; len(L) and j &lt; len(R):<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if L[i] &lt;= R[j]:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A[k] = L[i];  i = i + 1<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A[k] = R[j];  j = j + 1<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k = k + 1<br>&nbsp;&nbsp;&nbsp;&nbsp;copy any remaining elements of L, then of R, into A[k..r]</pre>
 <p>The initial call is <code>MERGE-SORT(A, 0, n-1)</code>.</p>
 <p>Two details matter more than they look:</p>
 <ul>
@@ -45,8 +26,7 @@ MERGE(A, l, m, r)
 </ul>
 <h3>3. Working through an example</h3>
 <p>Let us sort this array of eight numbers:</p>
-<pre><code class="language-text">A = [42, 17, 8, 93, 25, 61, 4, 50]
-</code></pre>
+<pre>A = [42, 17, 8, 93, 25, 61, 4, 50]</pre>
 <h4>Divide phase</h4>
 <p>The midpoint of indices 0..7 is 3, so we split into <code>[42, 17, 8, 93]</code> and <code>[25, 61, 4, 50]</code>. Each of those splits again, and again, until we are left with eight single-element pieces. The top half of the figure below shows this. No comparisons have been made yet; dividing only computes indices.</p>
 <p><img alt="Divide and merge phases for the example array" src="https://umbra-daa.vercel.app/blog/img/fig1_divide_and_merge.png" /></p>
@@ -66,9 +46,7 @@ MERGE(A, l, m, r)
 <h3>4. Time complexity</h3>
 <h4>Setting up the recurrence</h4>
 <p>Let T(n) be the time to merge sort n elements. Dividing takes constant time, the two recursive calls take T(n/2) each, and merging n elements takes at most cn time. So:</p>
-<pre><code class="language-text">T(n) = 2·T(n/2) + cn      for n &gt; 1
-T(1) = c
-</code></pre>
+<pre>T(n) = 2·T(n/2) + cn      for n &gt; 1<br>T(1) = c</pre>
 <h4>Method 1: the recursion tree</h4>
 <p>Draw each call as a node labelled with the non-recursive work it does.</p>
 <p><img alt="Recursion tree for T(n) = 2T(n/2) + cn" src="https://umbra-daa.vercel.app/blog/img/fig2_recursion_tree_cost.png" /></p>
@@ -80,8 +58,7 @@ T(1) = c
 <li>In general, level d has 2ᵈ nodes each doing cn/2ᵈ, which is still <strong>cn per level</strong>.</li>
 </ul>
 <p>The problem size halves at each level, so it reaches 1 after log₂n halvings, giving log₂n + 1 levels. Therefore:</p>
-<pre><code class="language-text">T(n) = cn · (log₂n + 1) = cn·log₂n + cn = Θ(n log n)
-</code></pre>
+<pre>T(n) = cn · (log₂n + 1) = cn·log₂n + cn = Θ(n log n)</pre>
 <p>This picture is worth remembering because it explains <em>why</em> merge sort is n log n: the work per level never shrinks (you always touch all n elements), but the number of levels is only logarithmic.</p>
 <h4>Method 2: the Master Theorem</h4>
 <p>The recurrence has the form T(n) = a·T(n/b) + f(n) with a = 2, b = 2, f(n) = Θ(n).

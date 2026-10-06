@@ -28,13 +28,7 @@
 <p>One variation is worth knowing: if you are allowed to take <em>fractions</em> of items (the <strong>fractional knapsack</strong>), greedy by ratio is provably optimal. You would take all of D and two-thirds of B. It is the all-or-nothing rule that breaks it.</p>
 <h3>3. The other obvious approach: try everything</h3>
 <p>Each item is either in or out, so there are 2ⁿ possible subsets. Checking all of them is guaranteed correct:</p>
-<pre><code class="language-text">BRUTE(i, room)                        // best value using items i..n with `room` capacity left
-    if i &gt; n: return 0
-    skip = BRUTE(i + 1, room)
-    if w[i] &gt; room: return skip
-    take = v[i] + BRUTE(i + 1, room − w[i])
-    return max(skip, take)
-</code></pre>
+<pre>BRUTE(i, room)                        // best value using items i..n with `room` capacity left<br>&nbsp;&nbsp;&nbsp;&nbsp;if i &gt; n: return 0<br>&nbsp;&nbsp;&nbsp;&nbsp;skip = BRUTE(i + 1, room)<br>&nbsp;&nbsp;&nbsp;&nbsp;if w[i] &gt; room: return skip<br>&nbsp;&nbsp;&nbsp;&nbsp;take = v[i] + BRUTE(i + 1, room − w[i])<br>&nbsp;&nbsp;&nbsp;&nbsp;return max(skip, take)</pre>
 <p>This is Θ(2ⁿ). For 4 items that is 16 subsets. For 40 items it is over a trillion.</p>
 <p>But look at what the function depends on: only <strong>i</strong> (which item we are up to) and <strong>room</strong> (how much capacity is left). There are at most n values of i and W + 1 values of room. So there are only about <strong>n × W different questions</strong> this function can ever be asked, even though it is called up to 2ⁿ times. Most of those calls are repeats.</p>
 <h3>4. The dynamic programming idea</h3>
@@ -45,31 +39,10 @@
 </ul>
 <p>So instead of recomputing, <strong>solve each subproblem once and write the answer in a table.</strong></p>
 <p>Define <strong>K[i][c]</strong> as the best value achievable using only the first i items with capacity c. For each item there are exactly two options, skip it or take it:</p>
-<pre><code class="language-text">K[i][c] = K[i−1][c]                                     if wᵢ &gt; c      (it does not fit)
-K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
-               └ skip it ┘  └──── take it ────┘
-</code></pre>
+<pre>K[i][c] = K[i−1][c]                                     if wᵢ &gt; c      (it does not fit)<br>K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└ skip it ┘  └──── take it ────┘</pre>
 <p>with K[0][c] = 0, because no items means no value. The answer to the whole problem is <strong>K[n][W]</strong>.</p>
 <h3>5. Pseudocode</h3>
-<pre><code class="language-text">KNAPSACK(w, v, n, W)
-    for c = 0 to W:
-        K[0][c] = 0
-
-    for i = 1 to n:
-        for c = 0 to W:
-            K[i][c] = K[i−1][c]                          // skip item i
-            if w[i] &lt;= c:
-                K[i][c] = max(K[i][c], v[i] + K[i−1][c − w[i]])    // or take it
-
-    // walk back through the table to find which items were taken
-    c = W
-    for i = n down to 1:
-        if K[i][c] != K[i−1][c]:
-            output item i
-            c = c − w[i]
-
-    return K[n][W]
-</code></pre>
+<pre>KNAPSACK(w, v, n, W)<br>&nbsp;&nbsp;&nbsp;&nbsp;for c = 0 to W:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;K[0][c] = 0<br><br>&nbsp;&nbsp;&nbsp;&nbsp;for i = 1 to n:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for c = 0 to W:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;K[i][c] = K[i−1][c]                          // skip item i<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if w[i] &lt;= c:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;K[i][c] = max(K[i][c], v[i] + K[i−1][c − w[i]])    // or take it<br><br>&nbsp;&nbsp;&nbsp;&nbsp;// walk back through the table to find which items were taken<br>&nbsp;&nbsp;&nbsp;&nbsp;c = W<br>&nbsp;&nbsp;&nbsp;&nbsp;for i = n down to 1:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if K[i][c] != K[i−1][c]:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output item i<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c = c − w[i]<br><br>&nbsp;&nbsp;&nbsp;&nbsp;return K[n][W]</pre>
 <h3>6. Filling in the table</h3>
 <p>Here is the full table for the example. Each row adds one more item to the set we are allowed to use.</p>
 <p><img alt="The dynamic programming table for the example, with the traceback path highlighted" src="https://umbra-daa.vercel.app/blog/img/b5_fig1_table.png" /></p>
@@ -85,8 +58,7 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
 <p><strong>Take B and C: weight 7, value 9.</strong> That beats greedy's 8.</p>
 <h3>7. Time complexity</h3>
 <p>The table has (n + 1) rows and (W + 1) columns, and each cell takes constant time: one comparison and one addition.</p>
-<pre><code class="language-text">Time = Θ(n · W)
-</code></pre>
+<pre>Time = Θ(n · W)</pre>
 <p>The traceback adds Θ(n). There is no best or worst case; the table is always filled completely.</p>
 <h4>The catch: "pseudo-polynomial"</h4>
 <p>Θ(nW) looks polynomial, but there is a subtlety. Running time is supposed to be measured against the <em>size of the input</em>, and the number W takes only about log₂W bits to write down. In terms of that size, W itself is exponential. Add one digit to W and the table gets ten times wider.</p>
@@ -97,10 +69,7 @@ K[i][c] = max( K[i−1][c],  vᵢ + K[i−1][c − wᵢ] )        otherwise
 <li><strong>Full table: Θ(nW).</strong> Needed if you want to recover which items were chosen.</li>
 <li><strong>One row: Θ(W).</strong> Each row only ever reads the row directly above it, so if you only need the best <em>value</em>, a single array is enough:</li>
 </ul>
-<pre><code class="language-text">for each item i:
-    for c = W down to w[i]:
-        K[c] = max(K[c], v[i] + K[c − w[i]])
-</code></pre>
+<pre>for each item i:<br>&nbsp;&nbsp;&nbsp;&nbsp;for c = W down to w[i]:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;K[c] = max(K[c], v[i] + K[c − w[i]])</pre>
 <p>The inner loop <strong>must run from right to left</strong>. Going right to left, K[c − w[i]] still holds the value from the previous item's row. Going left to right, it would already have been updated for the current item, which lets the item be taken twice. That is a different problem (the unbounded knapsack), and a very easy bug to introduce.</p>
 <h3>9. Checking it against real measurements</h3>
 <p>I implemented all four approaches in Python: brute force, the full table, the one-row version, and greedy.</p>
