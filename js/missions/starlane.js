@@ -75,7 +75,7 @@ const Starlane = {
                         : `Lane ${nm(u)}–${nm(v)}: ${dist[u]} + ${w} = ${nd}, no better than ${old}. ${nm(v)} stays at ${old}.` });
       });
     }
-    snap({ line: -1, phase: "Done", done: true, msg: `All stars are settled. The green lanes form the shortest-path tree from ${nm(R.src)}.` });
+    snap({ line: -1, phase: "Done", done: true, msg: `All stars are settled. The highlighted lanes form the shortest-path tree from ${nm(R.src)}.` });
     return steps;
   },
   draw(s, ask) {
