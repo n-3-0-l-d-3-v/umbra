@@ -86,6 +86,14 @@ js/
   main.js               boot and challenge links
 ```
 
+## Notes
+
+Five essays sit alongside the game at [/blog](https://umbra-daa.vercel.app/blog/): merge sort, binary search, Dijkstra's algorithm, the Master Theorem, and the 0/1 knapsack problem. Each has a worked example, a complexity analysis and measurements from the scripts in `analysis/`.
+
+```bash
+python analysis/merge_sort.py      # likewise binary_search.py, dijkstra.py, recurrences.py, knapsack.py
+```
+
 ## Author
 
 Neil Thomas Mathew
