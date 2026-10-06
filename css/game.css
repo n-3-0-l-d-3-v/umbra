@@ -49,3 +49,16 @@ pre span.hl { color: var(--bg); background: var(--ink); }
 #end .sc { font: 500 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin: 12px 0 18px; }
 #end p { color: var(--dim); max-width: 480px; margin: 0 auto 24px; font: italic 400 21px/1.3 var(--serif); }
 #end .acts { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+/* pods (number tiles): the active one is inverted, everything else is outline */
+.pod { width: 56px; height: 72px; display: grid; place-items: center; border: 1px solid var(--line); background: var(--soft); font: 500 19px var(--mono);
+       transition: transform .45s var(--out), background .3s, color .3s, opacity .4s, border-color .3s; will-change: transform; }
+.pod.used { opacity: .13; transform: scale(.88); }
+.pod.head { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.pod.cmp { outline: 1px solid var(--ink); outline-offset: 5px; }
+.pod.fresh { border-color: var(--ink); animation: dock .7s var(--out); }
+@keyframes dock { from { transform: translateY(-46px); background: var(--ink); color: var(--bg); } 60% { background: var(--ink); color: var(--bg); } }
+.pod.empty { border-style: dashed; background: none; }
+.pod[data-pick]:hover { transform: translate3d(0, -12px, 0); outline: 1px solid var(--ink); outline-offset: 5px; }
+.idle { color: var(--faint); text-align: center; margin: 56px 0 0; font: 500 11px var(--mono); letter-spacing: .2em; }
+small.lb { display: block; font: 500 10px var(--mono); letter-spacing: .18em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; }
