@@ -101,3 +101,44 @@ function togglePlay() {
   $("play").textContent = "⏸ Hold";
   timer = setInterval(() => go(cur + 1), 1500 - $("speed").value * 135);
 }
+
+/* ---- manual ---- */
+function auto() {                // run forward until the next decision, then wait for the pilot
+  clearTimeout(timer);
+  if (mode !== "play" || live || done) return;
+  const s = steps[cur];
+  if (s.decision) return;
+  if (cur === steps.length - 1) { timer = setTimeout(finish, 1000); return; }
+  timer = setTimeout(() => { cur++; render(); auto(); }, s.pause || 700);
+}
+function where() {               // where to draw the particle burst: last click, or the middle of the stage for key presses
+  if (at) return at;
+  const r = $("stagewrap").getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2];
+}
+function wrong() {
+  for (const [el, c] of [[$("stage"), "shake"], [$("stagewrap"), "flash"]]) { el.classList.remove(c); void el.offsetWidth; el.classList.add(c); }
+  burst(...where(), "#ecebe6", 12, 3);
+}
+function pick(v) {
+  if (mode !== "play" || done) return;
+  if (live) {
+    const good = G.playPick(live, v, st);
+    if (good === false) return;
+    burst(...where(), live.found >= 0 ? "#ecebe6" : good ? "#ecebe6" : "#ecebe6", live.found >= 0 ? 46 : 16);
+    if (!good && !live.over) wrong();
+    render();
+    if (live.over) timer = setTimeout(finish, 1200);
+    return;
+  }
+  const d = steps[cur].decision;
+  if (!d) return;
+  st.you++;
+  if (String(v) === String(d.correct)) {
+    st.streak++; st.best = Math.max(st.best, st.streak); fb = null;
+    burst(...where(), "#ecebe6", 14 + Math.min(st.streak, 12) * 2);
+    cur++; render(); auto();
+  } else {
+    st.streak = 0; fb = typeof d.why === "function" ? d.why(v) : d.why; render(); wrong();
+  }
+  at = null;
+}
