@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Three short games where you take the place of a classic algorithm: merge sort, binary search and Dijkstra. Make every decision it would make and get scored against par.">
+<meta name="theme-color" content="#070707">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Umbra® — Fly the Algorithm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/home.css">
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/missions.css">
+</head>
+<body>
+<canvas id="sky" class="layer"></canvas>
+<canvas id="fx" class="layer"></canvas>
+
+<div id="intro"><span>Umbra® · Systems check</span><b id="introN">0</b></div>
+<div id="curtain"></div><div id="cursor"></div><div class="grain"></div>
+
+<div id="home">
+  <header class="bar">
+    <a class="logo" href="#">Umbra<sup>®</sup></a>
+    <nav><a href="#missions">Missions</a><a href="#method">Method</a></nav>
+    <span class="clock" id="clock">MET 00:00:00</span>
+  </header>
+  <section class="hero">
+    <div class="orb" aria-hidden="true">
+      <div class="ring r3"><i></i></div>
+      <div class="ring r2"><i></i><i></i></div>
+      <div class="tilt"><div class="ring r1"><i></i></div></div>
+      <div class="planet"></div>
+    </div>
+    <div class="coord lbl">RA 14h 29m 43s &nbsp;/&nbsp; DEC −62° 40′ 46″<br>Design &amp; Analysis of Algorithms</div>
+    <h1><span class="ln"><span>Don't watch</span></span><span class="ln"><span>the algorithm.</span></span><span class="ln"><span><em>Fly it.</em></span></span></h1>
+    <div class="herofoot">
+      <p>Three missions. In each one you sit where the algorithm sits and make every call it would make. Mission control scores you against the optimal number of moves.</p>
+      <a class="scroll lbl" href="#missions">Scroll <i></i></a>
+    </div>
+  </section>
+  <div class="ticker"><div class="tk">Merge sort<span>✦</span>Divide and conquer<span>✦</span>Binary search<span>✦</span>Decrease and conquer<span>✦</span>Dijkstra<span>✦</span>Greedy on graphs<span>✦</span>Merge sort<span>✦</span>Divide and conquer<span>✦</span>Binary search<span>✦</span>Decrease and conquer<span>✦</span>Dijkstra<span>✦</span>Greedy on graphs<span>✦</span></div><div class="tk">Merge sort<span>✦</span>Divide and conquer<span>✦</span>Binary search<span>✦</span>Decrease and conquer<span>✦</span>Dijkstra<span>✦</span>Greedy on graphs<span>✦</span>Merge sort<span>✦</span>Divide and conquer<span>✦</span>Binary search<span>✦</span>Decrease and conquer<span>✦</span>Dijkstra<span>✦</span>Greedy on graphs<span>✦</span></div></div>
+  <section id="missions">
+    <div class="sec lbl rv"><span>(01)</span><h2>Missions</h2><span>Generated fresh every round</span></div>
+    <div id="cards"></div>
+  </section>
+  <section id="method">
+    <div class="sec lbl rv"><span>(02)</span><h2>Method</h2><span>How a flight works</span></div>
+    <div class="method rv">
+      <div><span class="lbl">A</span><h4>Take <em>the seat</em></h4><p>On Manual, the simulation stops at every point where the algorithm has to choose. Nothing moves until you decide.</p></div>
+      <div><span class="lbl">B</span><h4>Make <em>the call</em></h4><p>Pick right and the run continues. Pick wrong and you are told exactly why the algorithm would have chosen differently.</p></div>
+      <div><span class="lbl">C</span><h4>Get <em>debriefed</em></h4><p>Your moves are compared with par, the fewest decisions the algorithm needs. Autopilot replays any round with a full explanation.</p></div>
+    </div>
+  </section>
+  <footer><div class="wm">Umbra</div><div class="fl lbl"><span>Flight school for algorithms</span><span>Merge sort · Binary search · Dijkstra</span><span>DAA · CIA 3</span></div></footer>
+</div>
+
+<div id="game" hidden>
+  <div class="top">
+    <button id="homeBtn" title="Back to the index (Esc)">← Index</button>
+    <div class="gt"><b id="gName"></b><span id="gTopic"></span></div>
+    <input id="custom" type="text" placeholder="Own numbers: 5, 3, 9, 1 ⏎" aria-label="Custom array">
+    <select id="size" aria-label="Size"></select>
+    <button id="newBtn">New round</button>
+    <div class="seg" id="modeSeg"><button data-mode="watch">Autopilot</button><button data-mode="play">Manual</button></div>
+    <button id="focusBtn" title="Hide or show the flight computer">Focus</button>
+  </div>
+  <div class="hud" id="hud"></div>
+  <div class="layout" id="layout">
+    <div>
+      <div id="stagewrap" class="panel"><div id="stage"></div><div id="end" hidden></div></div>
+      <div class="say" id="say"></div>
+      <div id="watchCtl">
+        <div class="ctl">
+          <button id="first" title="Start (Home)">⏮</button>
+          <button id="back" title="Back (←)">◀ Step</button>
+          <button id="play" class="go" title="Play / pause (Space)">▶ Run</button>
+          <button id="fwd" title="Forward (→)">Step ▶</button>
+          <button id="last" title="End (End)">⏭</button>
+          <label>Speed <input id="speed" type="range" min="1" max="10" value="5"></label>
+        </div>
+        <input id="scrub" type="range" min="0" value="0" aria-label="Scrub through steps">
+      </div>
+      <div id="playCtl" class="ctl"><span id="hint"></span></div>
+    </div>
+    <aside>
+      <div class="panel"><h3>Flight computer · pseudocode</h3><pre id="code"></pre></div>
+      <div class="panel"><h3>Mission log</h3><ul id="log"></ul></div>
+    </aside>
+  </div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/missions/convoy.js"></script>
+<script src="js/missions/signal.js"></script>
+<script src="js/missions/starlane.js"></script>
+<script src="js/sky.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/motion.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
