@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closest First: How Dijkstra's Algorithm Finds the Shortest Route</title>
+<meta name="description" content="Every time a maps app gives you a route, or a packet finds its way across the internet, something has answered the same question: out of all the possible w">
+<meta name="author" content="Neil Thomas Mathew">
+<link rel="icon" href="/favicon.svg">
+<style>body{margin:0;background:#fbfaf7;color:#1f2328;font:19px/1.72 Georgia,serif}article{max-width:740px;margin:0 auto;padding:56px 20px 90px}
+h1{font:700 2.2em/1.15 "Segoe UI",system-ui,sans-serif;margin:0 0 .6em}h2{font:700 1.45em/1.3 "Segoe UI",system-ui,sans-serif;margin:2.2em 0 .6em}
+h3{font:600 1.12em "Segoe UI",system-ui,sans-serif;margin:1.6em 0 .4em}figure{margin:1.8em 0;text-align:center}img{max-width:100%}
+figcaption{color:#5d6670;font-size:.82em;margin-top:.5em}pre{background:#f2efe8;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:.78em;line-height:1.55}
+code{font-family:Consolas,monospace;background:#f2efe8;padding:1px 5px;border-radius:4px;font-size:.88em}pre code{padding:0;background:none}a{color:#2f5fb3}
+nav{font:14px "Segoe UI",sans-serif;margin-bottom:40px}nav a{margin-right:18px}</style></head>
+<body><article>
+<h1>Closest First: How Dijkstra's Algorithm Finds the Shortest Route</h1>
+<p>Every time a maps app gives you a route, or a packet finds its way across the internet, something has answered the same question: out of all the possible ways to get from here to there, which one costs the least?</p>
+<p>Trying every route is hopeless. Even a small road network has more possible paths than you could ever list. In 1956 Edsger Dijkstra worked out a method that avoids all of that with one simple rule: <strong>always deal with the closest place you have not finished yet.</strong> He later said he designed it in about twenty minutes, without pen and paper, sitting at a café.</p>
+<p>In this post I explain that rule, trace the algorithm by hand on a small graph, show why the greedy choice is safe, work out its running time for two different implementations, and then measure both to see whether the theory holds up.</p>
+<h2>1. The problem</h2>
+<p>We are given a <strong>weighted graph</strong>: a set of nodes (places) joined by edges (roads), where each edge has a weight (distance, time, fuel, cost). We pick one node as the <strong>source</strong>. The goal is the <strong>single-source shortest path</strong> problem: find the cheapest total weight from the source to <em>every</em> other node.</p>
+<p>Dijkstra's algorithm solves this with one condition: <strong>no edge may have a negative weight.</strong> Section 6 shows what breaks if one does.</p>
+<h2>2. The idea: settle the closest node, then update its neighbours</h2>
+<p>The algorithm keeps a number for every node, <code>dist[v]</code>: the cheapest route to v found <em>so far</em>. At the start that is 0 for the source and ∞ for everything else, because no routes are known yet.</p>
+<p>Then it repeats two steps:</p>
+<ol>
+<li><strong>Settle.</strong> Among the nodes that are not finished, pick the one with the smallest <code>dist</code>. Its distance is now final.</li>
+<li><strong>Relax.</strong> For each neighbour v of that node u, check whether going through u gives a cheaper route: if <code>dist[u] + w(u, v) &lt; dist[v]</code>, lower <code>dist[v]</code> to that value and remember that v's best route now comes through u.</li>
+</ol>
+<p>That is the whole algorithm. It is <strong>greedy</strong>: at every step it makes the choice that looks best right now (the closest unsettled node) and never goes back on it. Greedy strategies often give wrong answers. Section 5 explains why this one does not.</p>
+<h2>3. Pseudocode</h2>
+<pre><code class="language-text">DIJKSTRA(G, s)
+    for each node v in G:
+        dist[v] = ∞
+        prev[v] = NONE
+    dist[s] = 0
+    Q = all nodes in G                      // the unsettled nodes
+
+    while Q is not empty:
+        u = node in Q with the smallest dist     // settle
+        remove u from Q
+        for each edge (u, v) with v still in Q:  // relax
+            if dist[u] + w(u, v) &lt; dist[v]:
+                dist[v] = dist[u] + w(u, v)
+                prev[v] = u
+    return dist, prev
+</code></pre>
+<p><code>prev</code> is what turns a table of distances into actual routes. To read off the shortest path to any node, start there and follow <code>prev</code> backwards until you reach the source.</p>
+<h2>4. Working through an example</h2>
+<p>Here is a graph with six nodes and nine edges. The source is <strong>A</strong>.</p>
+<figure><img alt="The example graph before and after running Dijkstra's algorithm" src="https://umbra-daa.vercel.app/blog/img/b3_fig1_graph.png" /><figcaption>Figure 1: Left: the input graph. Right: the result, with final distances beside each node and the shortest-path tree in green.</figcaption></figure>
+<p>The table shows <code>dist</code> for every node after each step. A value in <strong>bold</strong> has just improved. Once a node has been settled, its value never changes again.</p>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_03-dijkstra_t1.png" /></figure>
+<p>Three things in this trace are worth slowing down for.</p>
+<p><strong>Step 1 picks C, not B.</strong> After relaxing A's edges, B is at 4 and C is at 2. C is closer, so C is settled next, even though B was discovered first. Dijkstra orders nodes by distance, not by when they were found.</p>
+<p><strong>Step 2 changes its mind about B.</strong> The direct edge A–B costs 4. But going A → C → B costs 2 + 1 = 3. This is the moment that shows why the first route you find to a node is not necessarily the best one, and why <code>dist</code> values are only <em>tentative</em> until a node is settled.</p>
+<p><strong>The final answer is a tree.</strong> Following <code>prev</code> back from F gives F ← E ← D ← B ← C ← A, so the shortest route is <strong>A → C → B → D → E → F with total cost 2 + 1 + 5 + 2 + 3 = 13</strong>. The direct-looking route A → B → D → F costs 4 + 5 + 6 = 15. The <code>prev</code> links for all nodes together form the <strong>shortest-path tree</strong> shown in green.</p>
+<h2>5. Why the greedy choice is safe</h2>
+<p>The claim is: <em>when a node u is picked as the closest unsettled node, <code>dist[u]</code> is already its true shortest distance.</em></p>
+<p>Suppose it was not, and some cheaper route to u existed. That route starts at the source (settled) and ends at u (unsettled), so somewhere along it there is a first node, call it y, that is not settled yet. The part of the route up to y only uses settled nodes, so <code>dist[y]</code> already reflects it. And since u was chosen as the <em>closest</em> unsettled node, <code>dist[y] ≥ dist[u]</code>.</p>
+<p>The rest of the route, from y on to u, can only add to the cost, because <strong>no edge is negative</strong>. So the supposedly cheaper route costs at least <code>dist[y]</code>, which is at least <code>dist[u]</code>. It is not cheaper after all. That contradiction proves the claim.</p>
+<p>This is the same reasoning as: "every place I have not finished is at least this far away, and distances only grow, so nothing can come back and undercut the closest one."</p>
+<h2>6. What goes wrong with a negative edge</h2>
+<p>The proof leans entirely on "the rest of the route can only add to the cost". Take that away and the algorithm fails.</p>
+<pre><code class="language-text">Edges:   A → B  cost 2
+         A → C  cost 5
+         C → B  cost −4
+</code></pre>
+<p>From A, Dijkstra sees B at 2 and C at 5. B is closest, so B is settled at 2 and never looked at again. But A → C → B costs 5 + (−4) = 1, which is better. The algorithm reports 2 and is wrong.</p>
+<p>For graphs that can have negative edges, the <strong>Bellman–Ford</strong> algorithm is the correct tool. It is slower, at Θ(V · E), but it does not assume that settled means final.</p>
+<h2>7. Time complexity</h2>
+<p>Let V be the number of nodes and E the number of edges. The algorithm does two kinds of work:</p>
+<ul>
+<li><strong>V "settle" operations</strong>, each finding and removing the closest unsettled node.</li>
+<li><strong>At most E "relax" operations</strong>, each possibly lowering one distance. Every edge is looked at once from each end.</li>
+</ul>
+<p>How long these take depends entirely on how the unsettled nodes are stored.</p>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_03-dijkstra_t2.png" /></figure>
+<p><strong>Array version.</strong> Each of the V settle steps scans all V nodes, giving V² in total. The E relaxations are Θ(1) each and are absorbed, since E is at most V².</p>
+<p><strong>Binary heap version.</strong> V removals cost log V each, and up to E distance updates cost log V each, giving (V + E) log V.</p>
+<p>Which is better depends on the graph:</p>
+<ul>
+<li>For a <strong>sparse</strong> graph, where E is close to V (road networks, for example), the heap gives roughly V log V against V². The heap wins easily.</li>
+<li>For a <strong>dense</strong> graph, where E is close to V², the heap version becomes V² log V, which is <em>worse</em> than the simple array. More sophisticated is not always faster.</li>
+</ul>
+<h2>8. Space complexity</h2>
+<ul>
+<li><strong>Graph storage:</strong> Θ(V + E) as an adjacency list.</li>
+<li><strong><code>dist</code> and <code>prev</code>:</strong> Θ(V).</li>
+<li><strong>Priority queue:</strong> Θ(V) for an indexed heap. The common "lazy" version, which pushes a new entry instead of updating an old one, can hold up to Θ(E) entries.</li>
+</ul>
+<p>Total: <strong>Θ(V + E)</strong>.</p>
+<h2>9. Checking the theory against real measurements</h2>
+<p>I implemented both the array version and the min-heap version in Python, checked that they agree on 200 random graphs, and then timed them on connected sparse graphs with E = 4V.</p>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_03-dijkstra_t3.png" /></figure>
+<figure><img alt="Measured running time of the heap and array versions" src="https://umbra-daa.vercel.app/blog/img/b3_fig2_timing.png" /><figcaption>Figure 2: On a log–log plot the array version climbs with a slope of about 2 and the heap version with a slope of about 1.</figcaption></figure>
+<p>The exact milliseconds depend on my laptop and change a little between runs, but the pattern is stable:</p>
+<ol>
+<li><strong>Doubling V roughly quadruples the array version</strong> (7.7 → 33.0 → 149.7 → 599.1). That is Θ(V²) showing itself.</li>
+<li><strong>Doubling V a little more than doubles the heap version</strong> (0.6 → 1.4 → 2.9 → 7.0), as V log V predicts.</li>
+<li><strong>The gap keeps widening</strong>, from about 12× to about 86×. That is what different growth rates mean in practice: the advantage is not a fixed factor, it grows with the input.</li>
+</ol>
+<h2>10. How Dijkstra relates to other algorithms</h2>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_03-dijkstra_t4.png" /></figure>
+<p>It is also a close relative of <strong>Prim's algorithm</strong> for minimum spanning trees. The code is almost identical; the only difference is that Prim compares the weight of a single edge, while Dijkstra compares the total distance from the source.</p>
+<h2>11. Where it is used</h2>
+<ul>
+<li><strong>Internet routing.</strong> OSPF, one of the main protocols routers use inside a network, has every router run Dijkstra's algorithm on its map of the network to build its routing table.</li>
+<li><strong>Maps and navigation.</strong> Route planners are built on Dijkstra's idea, with heavy preprocessing and heuristics such as A* layered on top so that continent-sized road networks can be searched in milliseconds.</li>
+<li><strong>Games.</strong> Pathfinding for characters on a map is usually A*, which is Dijkstra with a sense of direction.</li>
+<li><strong>Anything that can be drawn as a weighted graph</strong>: cheapest flight connections, task scheduling, even currency conversions.</li>
+</ul>
+<h2>12. Common mistakes worth watching for</h2>
+<ul>
+<li><strong>Treating a node as finished when it is first discovered.</strong> A distance is only final when the node is <em>settled</em>. In the example, B was first seen at 4 and finished at 3.</li>
+<li><strong>Using it with negative weights.</strong> It will run happily and give wrong answers.</li>
+<li><strong>Forgetting to skip stale heap entries.</strong> The lazy heap version leaves old entries behind. Without the check <code>if d &gt; dist[u]: continue</code>, nodes are processed more than once and the running time degrades.</li>
+<li><strong>Returning only the distance.</strong> Without <code>prev</code> you know how far, but not which way.</li>
+<li><strong>Stopping too early or too late.</strong> If you only need one destination, you can stop as soon as it is <em>settled</em>. Stopping when it is first <em>reached</em> is wrong.</li>
+</ul>
+<h2>13. Play it: Starlane</h2>
+<p>The settle-then-relax rhythm is much easier to absorb by doing it. <strong>Starlane</strong> is one of three missions in <a href="https://umbra-daa.vercel.app">Umbra</a>, a browser game I built where you take the place of the algorithm.</p>
+<p>Each round generates a fresh star map: six to eight stars, jump lanes with fuel costs, and a random home star. Every turn you click the star Dijkstra would settle next. Pick correctly and you watch each of its lanes get relaxed. Pick wrong and you are told why: that star is already settled, or has not been reached yet, or another one is closer.</p>
+<figure><img alt="Starlane in Manual mode, waiting for the player to choose the next star" src="https://umbra-daa.vercel.app/blog/img/b3_umbra_choose.png" /><figcaption>Figure 3: The same graph as this post, loaded into Starlane. A is settled, B is at 4 and C is at 2. Which one is next?</figcaption></figure>
+<figure><img alt="Starlane relaxing an edge on Autopilot" src="https://umbra-daa.vercel.app/blog/img/b3_umbra_relax.png" /><figcaption>Figure 4: Autopilot relaxing the lane from B to D: 3 + 5 = 8 beats 10, so D drops to 8. This is step 3 of the table above.</figcaption></figure>
+<figure><img alt="Starlane with every star settled and the shortest-path tree highlighted" src="https://umbra-daa.vercel.app/blog/img/b3_umbra_done.png" /><figcaption>Figure 5: All six stars settled. The highlighted lanes are the shortest-path tree, and F ends at 13.</figcaption></figure>
+<p>Par is simply the number of stars, because the algorithm makes exactly one greedy decision per node. If you finish on par, you have executed Dijkstra's algorithm by hand without a single wrong turn.</p>
+<h2>14. Summary</h2>
+<ul>
+<li>Dijkstra's algorithm finds the cheapest route from one source to every node in a graph with <strong>non-negative</strong> edge weights.</li>
+<li>It repeats two steps: <strong>settle</strong> the closest unsettled node, then <strong>relax</strong> its edges.</li>
+<li>The greedy choice is safe because any other route to that node has to pass through something at least as far away, and weights cannot be negative.</li>
+<li>It runs in <strong>Θ(V²)</strong> with an array and <strong>Θ((V + E) log V)</strong> with a binary heap, using <strong>Θ(V + E)</strong> space.</li>
+<li>For negative weights, use Bellman–Ford. For unweighted graphs, BFS is enough.</li>
+</ul>
+<p>One rule, closest first, applied patiently until nothing is left. It is hard to think of another twenty minutes at a café that paid off this well.</p>
+<h3>References</h3>
+<ol>
+<li>E. W. Dijkstra, "A note on two problems in connexion with graphs," <em>Numerische Mathematik</em>, vol. 1, pp. 269–271, 1959.</li>
+<li>T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, <em>Introduction to Algorithms</em>, 3rd ed., MIT Press, 2009. Chapter 24.3.</li>
+<li>J. Kleinberg and É. Tardos, <em>Algorithm Design</em>, Pearson, 2006. Chapter 4.4.</li>
+<li>T. Misa and P. Frana, "An interview with Edsger W. Dijkstra," <em>Communications of the ACM</em>, vol. 53, no. 8, pp. 41–47, 2010.</li>
+<li>J. Moy, "OSPF Version 2," RFC 2328, Internet Engineering Task Force, 1998.</li>
+<li>Source code and measurement scripts: <a href="https://github.com/n-3-0-l-d-3-v/umbra">github.com/n-3-0-l-d-3-v/umbra</a></li>
+</ol>
+</article></body></html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Twenty Questions for a Million Items: How Binary Search Really Works</title>
+<meta name="description" content="Think of a number between 1 and 1,000,000. If I am allowed to ask "is it bigger or smaller than this?", I can always find your number in at most 20 guesses">
+<meta name="author" content="Neil Thomas Mathew">
+<link rel="icon" href="/favicon.svg">
+<style>body{margin:0;background:#fbfaf7;color:#1f2328;font:19px/1.72 Georgia,serif}article{max-width:740px;margin:0 auto;padding:56px 20px 90px}
+h1{font:700 2.2em/1.15 "Segoe UI",system-ui,sans-serif;margin:0 0 .6em}h2{font:700 1.45em/1.3 "Segoe UI",system-ui,sans-serif;margin:2.2em 0 .6em}
+h3{font:600 1.12em "Segoe UI",system-ui,sans-serif;margin:1.6em 0 .4em}figure{margin:1.8em 0;text-align:center}img{max-width:100%}
+figcaption{color:#5d6670;font-size:.82em;margin-top:.5em}pre{background:#f2efe8;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:.78em;line-height:1.55}
+code{font-family:Consolas,monospace;background:#f2efe8;padding:1px 5px;border-radius:4px;font-size:.88em}pre code{padding:0;background:none}a{color:#2f5fb3}
+nav{font:14px "Segoe UI",sans-serif;margin-bottom:40px}nav a{margin-right:18px}</style></head>
+<body><article>
+<h1>Twenty Questions for a Million Items: How Binary Search Really Works</h1>
+<p>Think of a number between 1 and 1,000,000. If I am allowed to ask "is it bigger or smaller than this?", I can always find your number in at most 20 guesses. Not 500,000. Twenty.</p>
+<p>That is binary search, and it is probably the best return on effort in all of computer science: about ten lines of code that turn a search through a million items into twenty steps. It is also famously easy to get subtly wrong. In this post I explain how it works, trace it by hand, prove the running time, measure it on real data up to ten million elements, and go through the mistakes that have caught out professional programmers for decades.</p>
+<h2>1. The idea: throw away half, every time</h2>
+<p>Binary search needs one thing from its input: <strong>the data must be sorted</strong>. That single fact is what makes each comparison so powerful.</p>
+<p>Look at the element in the middle of the range you are searching:</p>
+<ul>
+<li>If it <strong>is</strong> the target, you are done.</li>
+<li>If it is <strong>smaller</strong> than the target, then so is everything to its left, because the array is sorted. The whole left half can be discarded without looking at it.</li>
+<li>If it is <strong>larger</strong>, the whole right half goes instead.</li>
+</ul>
+<p>One comparison, and half of the remaining candidates are gone. Repeat on what is left until you either find the target or run out of candidates.</p>
+<p>This strategy is called <strong>decrease and conquer</strong>. Unlike merge sort, which splits a problem into two halves and solves <em>both</em>, binary search splits it in two and only ever continues into <em>one</em>.</p>
+<h2>2. Pseudocode</h2>
+<pre><code class="language-text">BINARY-SEARCH(A, t)                  // A is sorted in ascending order
+    lo = 0
+    hi = length(A) - 1
+    while lo &lt;= hi:
+        mid = floor((lo + hi) / 2)
+        if A[mid] == t:
+            return mid               // found
+        if A[mid] &lt; t:
+            lo = mid + 1             // t can only be to the right
+        else:
+            hi = mid - 1             // t can only be to the left
+    return NOT-FOUND
+</code></pre>
+<p>Three details carry all the correctness:</p>
+<ul>
+<li><strong><code>lo</code> and <code>hi</code> are both inclusive.</strong> The candidates are exactly the indices from <code>lo</code> to <code>hi</code>. When <code>lo &gt; hi</code> there are none left.</li>
+<li><strong><code>mid + 1</code> and <code>mid - 1</code>, never just <code>mid</code>.</strong> We have already looked at <code>A[mid]</code> and it was not the target, so it must leave the range. Forgetting the <code>± 1</code> is the classic way to write an infinite loop.</li>
+<li><strong><code>lo &lt;= hi</code>, not <code>lo &lt; hi</code>.</strong> When one candidate is left, <code>lo == hi</code>, and it still has to be checked.</li>
+</ul>
+<p>The invariant that holds every time the loop condition is tested is: <em>if the target is in the array at all, its index is between <code>lo</code> and <code>hi</code>.</em> Each iteration keeps that true while shrinking the range, so the loop must end with either the answer or an empty range.</p>
+<h2>3. Working through an example</h2>
+<p>Here is a sorted array of 15 numbers. We want to find <strong>83</strong>.</p>
+<pre><code class="language-text">index:  0   1   2   3   4   5   6   7   8   9  10  11  12  13  14
+A    =  3   9  14  22  27  31  40  48  55  61  70  76  83  90  97
+</code></pre>
+<figure><img alt="Binary search for 83, one row per probe" src="https://umbra-daa.vercel.app/blog/img/b2_fig1_halving.png" /><figcaption>Figure 1: Each row is one probe. Blue cells are still candidates, the highlighted cell is the one being checked, and grey cells have been ruled out.</figcaption></figure>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_02-binary-search_t1.png" /></figure>
+<p>Four probes. A left-to-right scan would have needed 13. Notice how the candidates fall: 15 → 7 → 3 → 1. Each probe cuts the range roughly in half.</p>
+<h3>What if the target is not there?</h3>
+<p>Search the same array for <strong>50</strong>:</p>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_02-binary-search_t2.png" /></figure>
+<p>Now <code>lo = 8</code> and <code>hi = 7</code>. The range is empty, the loop ends, and we return NOT-FOUND. This is a quiet strength of binary search: it can <strong>prove a value is absent</strong> in four probes, where a scan would have to check all fifteen. It also tells you exactly where 50 <em>would</em> go: between index 7 and index 8.</p>
+<h2>4. Time complexity</h2>
+<h3>Counting the halvings</h3>
+<p>After each failed probe, at most half of the candidates survive. Starting from n candidates, after k probes at most n / 2ᵏ remain. The search must stop once that drops below 1:</p>
+<pre><code class="language-text">n / 2^k &lt; 1    ⟹    k &gt; log₂ n
+</code></pre>
+<p>So the worst case is <strong>⌊log₂n⌋ + 1</strong> probes. For n = 15 that is 3 + 1 = 4, which is exactly what both examples above needed.</p>
+<h3>As a recurrence</h3>
+<p>Each call does a constant amount of work and then continues on half the input:</p>
+<pre><code class="language-text">T(n) = T(n/2) + c,      T(1) = c
+</code></pre>
+<p>Unrolling it: T(n) = c + c + … + c, once per halving, which gives c · (log₂n + 1) = <strong>Θ(log n)</strong>.</p>
+<p>The Master Theorem agrees. With a = 1, b = 2 and f(n) = Θ(1), we get n^(log_b a) = n⁰ = 1, which matches f(n). That is Case 2, so T(n) = Θ(log n).</p>
+<h3>Best, average and worst</h3>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_02-binary-search_t3.png" /></figure>
+<p>The average is only about one probe better than the worst case. That looks odd until you picture the search as a tree: half of all elements sit on the bottom level, a quarter on the level above, and so on. Most targets are found late.</p>
+<h3>It cannot be beaten by comparisons</h3>
+<p>Any algorithm that searches by comparing must be able to end in n + 1 different ways (n positions, plus "not found"). A sequence of k yes/no answers can only distinguish 2ᵏ outcomes, so k must be at least ⌈log₂(n + 1)⌉. That number is equal to ⌊log₂n⌋ + 1, which is exactly what binary search achieves. It is <strong>optimal</strong> among comparison-based searches.</p>
+<h2>5. Space complexity</h2>
+<ul>
+<li><strong>Iterative version: Θ(1).</strong> Three integers, <code>lo</code>, <code>hi</code> and <code>mid</code>, regardless of the size of the array.</li>
+<li><strong>Recursive version: Θ(log n).</strong> Each recursive call adds a stack frame, and the recursion goes log₂n deep. This is why the loop version is the one normally used.</li>
+</ul>
+<p>Neither version copies the array.</p>
+<h2>6. Checking the theory against real measurements</h2>
+<p>I wrote a Python implementation that counts every probe and ran it on sorted arrays from one thousand to ten million elements. For each size it records the worst case and the average over 2,000 random successful searches. The linear search column is the expected (n + 1) / 2 comparisons for a hit.</p>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_02-binary-search_t4.png" /></figure>
+<figure><img alt="Probes needed by binary and linear search as n grows" src="https://umbra-daa.vercel.app/blog/img/b2_fig2_growth.png" /><figcaption>Figure 2: Left: on a log–log plot linear search climbs steadily while binary search barely leaves the floor. Right: binary search on its own, sitting exactly on the ⌊log₂n⌋ + 1 line.</figcaption></figure>
+<p>What I took from this:</p>
+<ol>
+<li><strong>The worst case matches the formula exactly</strong>, at every size. There is no hidden constant to worry about.</li>
+<li><strong>Multiplying n by 10,000 added only 14 probes</strong> (from 10 to 24). Linear search went from 500 to 5,000,000.</li>
+<li><strong>The measured average is almost exactly log₂n − 1.</strong> For a million elements log₂n is 19.93, and the measured average was 18.95.</li>
+</ol>
+<p>At ten million elements, binary search is doing about 224,000 times less work than a scan. No amount of hardware makes up for that.</p>
+<h2>7. Binary search compared with other ways to search</h2>
+<figure><img alt="Table" src="https://umbra-daa.vercel.app/blog/img/t_02-binary-search_t5.png" /></figure>
+<p>The honest cost of binary search is the sorting. Sorting takes Θ(n log n), so for a single lookup on unsorted data a linear scan is faster. Binary search wins when you search the same data many times. It also does something a hash table cannot: because the data is ordered, it can answer "what is the nearest value?" and "how many values lie between x and y?".</p>
+<h2>8. Where it shows up in real life</h2>
+<ul>
+<li><strong>Standard libraries.</strong> Python's <code>bisect</code>, C++'s <code>std::lower_bound</code> and Java's <code>Arrays.binarySearch</code> are all binary search.</li>
+<li><strong>Database indexes.</strong> A B-tree index is a tree of sorted pages; finding a key inside each page is a binary search.</li>
+<li><strong><code>git bisect</code>.</strong> When a bug appeared somewhere in the last thousand commits, Git checks out the middle commit and asks whether it is good or bad. Ten answers later you have the exact commit that broke things. The "sorted array" here is the commit history, and the order is "before the bug" and "after the bug".</li>
+<li><strong>Searching on the answer.</strong> Many optimisation problems ask for "the smallest value x for which something is possible". If being possible for x means it is also possible for everything larger, you can binary search over x itself, even though there is no array anywhere.</li>
+</ul>
+<h2>9. Common mistakes worth watching for</h2>
+<p>Binary search has a reputation: the idea was published in 1946, but according to Knuth the first version that was correct for all array sizes did not appear until 1962.</p>
+<ul>
+<li><strong>Integer overflow in the midpoint.</strong> In languages with fixed-size integers, <code>(lo + hi) / 2</code> overflows when <code>lo + hi</code> exceeds the largest integer. The safe form is <code>lo + (hi - lo) / 2</code>. This exact bug sat in Java's standard library for about nine years before it was reported in 2006.</li>
+<li><strong>Writing <code>lo = mid</code> instead of <code>lo = mid + 1</code>.</strong> When <code>lo</code> and <code>hi</code> are next to each other, <code>mid</code> equals <code>lo</code>, nothing changes, and the loop never ends.</li>
+<li><strong>Using <code>lo &lt; hi</code> as the loop condition</strong> with inclusive bounds. The last remaining candidate is never checked, so searching for the final element fails.</li>
+<li><strong>Running it on unsorted data.</strong> Nothing crashes. It simply returns wrong answers, which is worse.</li>
+<li><strong>Assuming it returns the first match.</strong> With duplicates, plain binary search returns <em>some</em> matching index. If you need the first one, you need the lower-bound variant, which keeps searching left after a match.</li>
+</ul>
+<p>My test script checks the implementation against Python's <code>bisect</code> module for every possible target on arrays of every size from 0 to 59, which covers each of these edge cases, including empty arrays and absent values.</p>
+<h2>10. Play it: Signal Lock</h2>
+<p>To make the halving something you can feel, I built <strong>Signal Lock</strong>, one of three missions in <a href="https://umbra-daa.vercel.app">Umbra</a>, a browser game where you take the place of the algorithm.</p>
+<p>A beacon is hidden in a sorted row of face-down sectors. Every ping costs one probe, and par is ⌊log₂n⌋ + 1. Ping wherever you like: the game dims everything your ping ruled out, and if you did not choose the middle, it tells you how many candidates your choice risked leaving compared with the middle. About one round in five, the beacon is not there at all, and you have to prove it.</p>
+<figure><img alt="Signal Lock on autopilot, part-way through a search" src="https://umbra-daa.vercel.app/blog/img/b2_umbra_scan.png" /><figcaption>Figure 3: Signal Lock on Autopilot, searching the same array as this post for 83. Index 11 has just been pinged, and the left side is already ruled out.</figcaption></figure>
+<figure><img alt="Signal Lock after the target has been found" src="https://umbra-daa.vercel.app/blog/img/b2_umbra_found.png" /><figcaption>Figure 4: Locked on in 4 pings, with the matching line of pseudocode highlighted.</figcaption></figure>
+<p>Try pinging one sector at a time from the left on a 31-sector row. You will run out of par after five pings with most of the row still dark. Then play it again from the middle. That difference is Θ(n) against Θ(log n).</p>
+<h2>11. Summary</h2>
+<ul>
+<li>Binary search works on <strong>sorted</strong> data by checking the middle element and discarding the half that cannot contain the target.</li>
+<li>It needs at most <strong>⌊log₂n⌋ + 1</strong> probes, so its running time is <strong>Θ(log n)</strong>, and no comparison-based search can do better.</li>
+<li>The iterative version uses <strong>Θ(1)</strong> extra space.</li>
+<li>It can prove a value is <strong>absent</strong> just as quickly as it can find one.</li>
+<li>It is simple to describe and easy to get wrong: watch the midpoint, the <code>± 1</code>, and the loop condition.</li>
+</ul>
+<p>Twenty questions for a million items, and twenty-four for ten million. That is what a logarithm buys you.</p>
+<h3>References</h3>
+<ol>
+<li>T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, <em>Introduction to Algorithms</em>, 3rd ed., MIT Press, 2009. Exercise 2.3-5 and Chapter 4.</li>
+<li>D. E. Knuth, <em>The Art of Computer Programming, Vol. 3: Sorting and Searching</em>, 2nd ed., Addison-Wesley, 1998. Section 6.2.1.</li>
+<li>J. Bentley, <em>Programming Pearls</em>, 2nd ed., Addison-Wesley, 2000. Column 4, "Writing Correct Programs".</li>
+<li>J. Bloch, "Extra, Extra – Read All About It: Nearly All Binary Searches and Mergesorts are Broken," Google Research Blog, 2006.</li>
+<li>Python Software Foundation, "bisect — Array bisection algorithm," Python documentation.</li>
+<li>Source code and measurement scripts: <a href="https://github.com/n-3-0-l-d-3-v/umbra">github.com/n-3-0-l-d-3-v/umbra</a></li>
+</ol>
+</article></body></html>
