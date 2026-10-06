@@ -36,3 +36,30 @@
 .tk { flex: none; white-space: nowrap; font: italic 400 clamp(28px, 4vw, 56px)/1 var(--serif); will-change: transform; animation: tick 80s linear infinite; }
 .tk span { font-style: normal; color: var(--faint); margin: 0 .6em; }
 @keyframes tick { to { transform: translate3d(-100%, 0, 0); } }
+.sec { display: grid; grid-template-columns: 70px 1fr auto; align-items: baseline; gap: 10px; padding: 14vh 0 4vh; color: var(--dim); }
+.sec h2 { margin: 0; font: 400 clamp(30px, 4vw, 54px)/1 var(--serif); color: var(--ink); }
+.rv { opacity: 0; transform: translateY(40px); transition: opacity 1s var(--out), transform 1s var(--out); } .rv.in { opacity: 1; transform: none; }
+.mr { position: relative; display: grid; grid-template-columns: 70px minmax(0, 1.15fr) 170px minmax(0, 1fr) auto; gap: 24px; align-items: center; padding: 34px 0; border-top: 1px solid var(--line); transition: color .4s var(--ease); }
+.mr:last-child { border-bottom: 1px solid var(--line); }
+.mr::before { content: ""; position: absolute; inset: 0 -4vw; background: var(--ink); transform: scaleY(0); transform-origin: bottom; transition: transform .6s var(--ease); will-change: transform; }
+.mr:hover { color: var(--bg); } .mr:hover::before { transform: scaleY(1); transform-origin: top; }
+.mr .no, .mr h3, .mr .art, .mr .info { transition: transform .7s var(--out); will-change: transform; }
+.mr:hover .no { transform: translate3d(.8vw, 0, 0); } .mr:hover h3 { transform: translate3d(1.8vw, 0, 0); } .mr:hover .art { transform: translate3d(.6vw, 0, 0); }
+.mr > * { position: relative; }
+.mr .no { font: 500 11px var(--mono); letter-spacing: .16em; align-self: start; padding-top: 14px; }
+.mr h3 { margin: 0; font: 400 clamp(46px, 7.4vw, 124px)/.9 var(--serif); letter-spacing: -.03em; }
+.mr .art svg { width: 100%; height: 86px; display: block; overflow: visible; }
+.mr .alg { display: block; margin-bottom: 8px; }
+.mr p { margin: 0; font-size: 15px; opacity: .65; max-width: 380px; }
+.mr .acts { display: flex; flex-direction: column; gap: 8px; align-items: stretch; min-width: 150px; }
+.mr .best { opacity: .6; text-align: right; margin-bottom: 4px; }
+.mr:hover button { border-color: rgba(7,7,7,.3); background-image: linear-gradient(var(--bg), var(--bg)); }
+.mr:hover button:hover { color: var(--ink); border-color: var(--bg); }
+.mr:hover button.go { background: var(--bg); color: var(--ink); } .mr:hover button.go:hover { background: transparent; color: var(--bg); }
+@media (max-width: 900px) { .mr { grid-template-columns: 40px 1fr; } .mr .art, .mr .info { grid-column: 2; } .mr .acts { grid-column: 2; flex-direction: row; } .bar nav { display: none; } .orb { opacity: .5 !important; } }
+/* mission illustrations: each one acts out its algorithm on hover */
+.a-sort rect { transition: transform .8s var(--ease); transition-delay: calc(var(--i) * 35ms); } .mr:hover .a-sort rect { transform: translateX(calc(var(--to) * 1px)); }
+.a-scan .br { transform-origin: 72% 50%; transform-box: fill-box; } .mr:hover .a-scan .br { animation: halve 1.9s var(--ease) forwards; }
+@keyframes halve { 25% { transform: scaleX(.5); } 50% { transform: scaleX(.25); } 75%, 100% { transform: scaleX(.09); } }
+.a-scan .dot { opacity: .25; transition: opacity .3s 1.3s; } .mr:hover .a-scan .dot { opacity: 1; }
+.a-path .rt { stroke-dasharray: 330; stroke-dashoffset: 330; transition: stroke-dashoffset 1.3s var(--ease); } .mr:hover .a-path .rt { stroke-dashoffset: 0; }
